@@ -4,16 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CityFix - Centro de Monitoreo</title>
-
-    <!-- Leaflet CSS -->
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS propio -->
-    <link rel="stylesheet" href="styles.css" />
+    <style>
+        :root {
+            --bg-sidebar: #0B1B36;
+            --bg-active: #1652C6;
+            --bg-body: #F4F7FC;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --white: #FFFFFF;
+            --red: #EF4444;
+            --red-light: #FEE2E2;
+            --blue: #3B82F6;
+            --blue-light: #DBEAFE;
+            --orange: #F97316;
+            --orange-light: #FFEDD5;
+            --yellow: #EAB308;
+            --yellow-light: #FEF9C3;
+            --green: #10B981;
+            --green-light: #D1FAE5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { display: flex; height: 100vh; background-color: var(--bg-body); overflow: hidden; }
+
+        .sidebar { width: 260px; background-color: var(--bg-sidebar); color: var(--white); display: flex; flex-direction: column; padding: 20px 0; }
+        .logo-container { display: flex; align-items: center; gap: 12px; padding: 0 20px 30px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo-icon { background-color: var(--white); color: var(--bg-sidebar); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+        .logo-text p { font-size: 9px; color: #94A3B8; letter-spacing: 1px; font-weight: 600; }
+        .nav-menu { list-style: none; margin-top: 20px; flex-grow: 1; }
+        .nav-menu li { padding: 14px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: #94A3B8; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+        .nav-menu li:hover { background-color: rgba(255,255,255,0.05); color: var(--white); }
+        .nav-menu li.active { background-color: var(--bg-active); color: var(--white); border-left: 4px solid #60A5FA; }
+        .nav-menu li i { width: 20px; text-align: center; }
+
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; padding: 20px 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header-title h2 { font-size: 22px; color: var(--text-main); font-weight: 700; }
+        .header-info { display: flex; align-items: center; gap: 20px; }
+        .date-time { text-align: right; font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+        .date-time p:first-child { text-transform: capitalize; }
+
+        .notification { position: relative; width: 35px; height: 35px; background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
+        .notification .badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--white); padding: 5px 15px 5px 5px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
+        .user-profile img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .user-info p:first-child { font-size: 12px; font-weight: 700; color: var(--text-main); }
+        .user-info p:last-child { font-size: 10px; color: var(--green); font-weight: 600; }
+
+        .stats-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--white); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .stat-icon { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .stat-info h3 { font-size: 22px; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 4px; }
+        .stat-info p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        .card-red .stat-icon { background: var(--red-light); color: var(--red); }
+        .card-blue .stat-icon { background: var(--blue-light); color: var(--blue); }
+        .card-orange .stat-icon { background: var(--orange-light); color: var(--orange); }
+        .card-yellow .stat-icon { background: var(--yellow-light); color: var(--yellow); }
+
+        .map-section { background: var(--white); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; flex-grow: 1; min-height: 400px; }
+        .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .map-header h3 { font-size: 16px; color: var(--text-main); }
+        
+        #btnUbicacion {
+            background: var(--bg-active);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        #btnUbicacion:hover { background: #0F3FA0; transform: translateY(-1px); }
+        #btnUbicacion:disabled { opacity: 0.6; cursor: wait; }
+
+        #map { width: 100%; height: 100%; border-radius: 8px; flex-grow: 1; z-index: 1; }
+        
+        .map-legend { display: flex; justify-content: center; gap: 20px; margin-top: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-main); }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position: relative; }
+        .marker-patrol { background-color: var(--bg-sidebar); width: 35px; height: 25px; border-radius: 6px; }
+        .marker-ambulance { background-color: var(--red); width: 35px; height: 25px; border-radius: 6px; }
+        .marker-location { background-color: var(--orange); width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; font-size: 14px; }
+        .marker-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); color: white; font-size: 10px; font-weight: 700; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8); background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 3px; }
+
+        /* Panel de estado de unidades */
+        .units-status {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .unit-chip {
+            background: #F1F5F9;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .unit-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .unit-chip.patrol .dot { background: var(--bg-sidebar); }
+        .unit-chip.ambulance .dot { background: var(--red); }
+    </style>
 </head>
 <body>
 
@@ -62,15 +170,15 @@
         <section class="stats-container">
             <div class="stat-card card-red">
                 <div class="stat-icon"><i class="fa-solid fa-bell"></i></div>
-                <div class="stat-info"><h3>3</h3><p>Emergencias activas</p></div>
+                <div class="stat-info"><h3 id="stat-emergencias">3</h3><p>Emergencias activas</p></div>
             </div>
             <div class="stat-card card-blue">
                 <div class="stat-icon"><i class="fa-solid fa-car"></i></div>
-                <div class="stat-info"><h3>12</h3><p>Patrullas disponibles</p></div>
+                <div class="stat-info"><h3 id="stat-patrullas">3</h3><p>Patrullas en servicio</p></div>
             </div>
             <div class="stat-card card-orange">
                 <div class="stat-icon"><i class="fa-solid fa-truck-medical"></i></div>
-                <div class="stat-info"><h3>5</h3><p>Ambulancias disponibles</p></div>
+                <div class="stat-info"><h3 id="stat-ambulancias">2</h3><p>Ambulancias en servicio</p></div>
             </div>
             <div class="stat-card card-yellow">
                 <div class="stat-icon"><i class="fa-solid fa-wrench"></i></div>
@@ -80,25 +188,313 @@
 
         <section class="map-section">
             <div class="map-header">
-                <h3>Mapa general</h3>
+                <h3>Mapa general — Simulacro en tiempo real</h3>
+                <button id="btnUbicacion">
+                    <i class="fa-solid fa-location-crosshairs"></i> Mi ubicación
+                </button>
             </div>
 
             <div id="map"></div>
-
+            
             <div class="map-legend">
-                <div class="legend-item"><span class="legend-dot" style="background: var(--red);"></span> Emergencia</div>
-                <div class="legend-item"><span class="legend-dot" style="background: var(--blue);"></span> Patrulla</div>
                 <div class="legend-item"><span class="legend-dot" style="background: var(--red);"></span> Ambulancia</div>
-                <div class="legend-item"><span class="legend-dot" style="background: var(--blue);"></span> En camino</div>
-                <div class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> En el lugar</div>
-                <div class="legend-item"><span class="legend-dot" style="background: var(--green);"></span> Atendida</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--bg-sidebar);"></span> Patrulla</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> Tú</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--blue);"></span> Ruta activa</div>
             </div>
+
+            <div class="units-status" id="unitsStatus"></div>
         </section>
     </main>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- JS propio -->
-    <script src="app.js"></script>
+    
+    <script>
+        // ==========================================
+        // 1. RELOJ
+        // ==========================================
+        function actualizarReloj() {
+            const ahora = new Date();
+            document.getElementById('fecha-actual').textContent =
+                ahora.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('hora-actual').textContent =
+                ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+        actualizarReloj();
+        setInterval(actualizarReloj, 1000);
+
+        // ==========================================
+        // 2. MAPA
+        // ==========================================
+        const map = L.map('map').setView([20.9754, -89.6169], 14);
+
+        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains:['mt0','mt1','mt2','mt3'],
+            attribution: '&copy; Google Maps'
+        }).addTo(map);
+
+        // ==========================================
+        // 3. ICONOS
+        // ==========================================
+        function createCustomIcon(className, label, iconHtml = '') {
+            return L.divIcon({
+                className: 'custom-marker-wrapper',
+                html: `<div class="custom-marker ${className}">
+                            ${iconHtml}
+                            <div class="marker-label">${label}</div>
+                       </div>`,
+                iconSize: [35, 25],
+                iconAnchor: [17, 12]
+            });
+        }
+
+        // ==========================================
+        // 4. GEOLOCALIZACIÓN
+        // ==========================================
+        let marcadorUsuario = null;
+        let circuloUsuario = null;
+        let centroSimulacion = null;
+
+        function activarGeolocalizacion(auto = false) {
+            const btn = document.getElementById('btnUbicacion');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+
+            map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000 });
+
+            map.once('locationfound', function(e) {
+                if (marcadorUsuario) map.removeLayer(marcadorUsuario);
+                if (circuloUsuario) map.removeLayer(circuloUsuario);
+
+                circuloUsuario = L.circle(e.latlng, {
+                    radius: e.accuracy / 2, color: '#3B82F6',
+                    fillColor: '#DBEAFE', fillOpacity: 0.25, weight: 1
+                }).addTo(map);
+
+                marcadorUsuario = L.marker(e.latlng, {
+                    icon: createCustomIcon('marker-location', 'Tú', '<i class="fa-solid fa-location-crosshairs"></i>')
+                }).addTo(map).bindPopup(
+                    `<b>Tu ubicación</b><br>Precisión: ±${Math.round(e.accuracy)} m`
+                );
+
+                centroSimulacion = e.latlng;
+                iniciarSimulacion(e.latlng);
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación';
+            });
+
+            map.once('locationerror', function(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación';
+                const fallback = L.latLng(20.9754, -89.6169);
+                centroSimulacion = fallback;
+                map.setView(fallback, 15);
+                if (marcadorUsuario) map.removeLayer(marcadorUsuario);
+                marcadorUsuario = L.marker(fallback, {
+                    icon: createCustomIcon('marker-location', 'Tú (aprox)', '<i class="fa-solid fa-location-crosshairs"></i>')
+                }).addTo(map).bindPopup('Ubicación aproximada (Mérida)');
+                iniciarSimulacion(fallback);
+                if (!auto) alert('No se pudo obtener tu ubicación. Usando ubicación por defecto.');
+            });
+        }
+
+        document.getElementById('btnUbicacion').addEventListener('click', () => activarGeolocalizacion(false));
+
+        // ==========================================
+        // 5. UTILIDADES GEO
+        // ==========================================
+        function randomPointAround(center, minKm, maxKm) {
+            const r = (minKm + Math.random() * (maxKm - minKm)) / 111; // grados aprox
+            const theta = Math.random() * 2 * Math.PI;
+            return L.latLng(
+                center.lat + r * Math.cos(theta),
+                center.lng + r * Math.sin(theta) / Math.cos(center.lat * Math.PI / 180)
+            );
+        }
+
+        // Decodificar polyline de OSRM (precisión 5)
+        function decodePolyline(str, precision = 5) {
+            let index = 0, lat = 0, lng = 0, coordinates = [];
+            const factor = Math.pow(10, precision);
+            while (index < str.length) {
+                let b, shift = 0, result = 0;
+                do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+                const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+                shift = 0; result = 0;
+                do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+                const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+                coordinates.push([lat / factor, lng / factor]);
+            }
+            return coordinates;
+        }
+
+        // ==========================================
+        // 6. RUTEO CON OSRM
+        // ==========================================
+        async function obtenerRuta(origen, destino) {
+            const url = `https://router.project-osrm.org/route/v1/driving/${origen.lng},${origen.lat};${destino.lng},${destino.lat}?overview=full&geometries=polyline`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!data.routes || data.routes.length === 0) return null;
+                const coords = decodePolyline(data.routes[0].geometry, 5);
+                return coords.map(c => L.latLng(c[0], c[1]));
+            } catch (err) {
+                console.warn('Error OSRM:', err);
+                return null;
+            }
+        }
+
+        // ==========================================
+        // 7. SIMULACIÓN REALISTA POR CALLES
+        // ==========================================
+
+        const UNIDADES = [
+            { id: 'P-01', tipo: 'patrol',    icon: '<i class="fa-solid fa-car" style="font-size:12px;"></i>' },
+            { id: 'P-02', tipo: 'patrol',    icon: '<i class="fa-solid fa-car" style="font-size:12px;"></i>' },
+            { id: 'P-03', tipo: 'patrol',    icon: '<i class="fa-solid fa-car" style="font-size:12px;"></i>' },
+            { id: 'A-01', tipo: 'ambulance', icon: '<i class="fa-solid fa-truck-medical" style="font-size:12px;"></i>' },
+            { id: 'A-02', tipo: 'ambulance', icon: '<i class="fa-solid fa-truck-medical" style="font-size:12px;"></i>' }
+        ];
+
+        const estadoUnidades = {}; // id -> { marker, ruta, indice, polyline, estado, velocidad }
+
+        function iniciarSimulacion(centro) {
+            // Limpiar
+            Object.values(estadoUnidades).forEach(u => {
+                if (u.marker) map.removeLayer(u.marker);
+                if (u.polyline) map.removeLayer(u.polyline);
+            });
+            Object.keys(estadoUnidades).forEach(k => delete estadoUnidades[k]);
+
+            UNIDADES.forEach((u, i) => {
+                const inicio = randomPointAround(centro, 0.3, 0.9);
+                const marker = L.marker(inicio, {
+                    icon: createCustomIcon(
+                        u.tipo === 'patrol' ? 'marker-patrol' : 'marker-ambulance',
+                        u.id, u.icon
+                    )
+                }).addTo(map);
+
+                estadoUnidades[u.id] = {
+                    info: u,
+                    marker: marker,
+                    ruta: null,
+                    indice: 0,
+                    polyline: null,
+                    estado: 'buscando',
+                    velocidad: u.tipo === 'patrol' ? 1 : 1.2 // grados de avance por tick
+                };
+            });
+
+            actualizarPanelUnidades();
+
+            // Asignar primera ruta a cada unidad
+            UNIDADES.forEach(u => asignarNuevaRuta(u.id, centro));
+
+            // Bucle de animación
+            setInterval(animarUnidades, 200);
+
+            // Cada 15s, reasignar destino (simula nuevas emergencias)
+            setInterval(() => {
+                UNIDADES.forEach(u => {
+                    const est = estadoUnidades[u.id];
+                    if (est && est.estado === 'llegado') asignarNuevaRuta(u.id, centro);
+                });
+            }, 15000);
+        }
+
+        async function asignarNuevaRuta(id, centro) {
+            const est = estadoUnidades[id];
+            if (!est) return;
+            est.estado = 'buscando';
+
+            const origen = est.marker.getLatLng();
+            const destino = randomPointAround(centro, 0.5, 1.5);
+
+            const coords = await obtenerRuta(origen, destino);
+            if (!coords) {
+                est.estado = 'error';
+                return;
+            }
+
+            // Dibujar polyline
+            if (est.polyline) map.removeLayer(est.polyline);
+            est.polyline = L.polyline(coords, {
+                color: est.info.tipo === 'patrol' ? '#1652C6' : '#EF4444',
+                weight: 3, opacity: 0.6, dashArray: '5,8'
+            }).addTo(map);
+
+            est.ruta = coords;
+            est.indice = 0;
+            est.estado = 'en_camino';
+            est.destino = destino;
+            actualizarPanelUnidades();
+        }
+
+        function animarUnidades() {
+            Object.values(estadoUnidades).forEach(est => {
+                if (est.estado !== 'en_camino' || !est.ruta) return;
+
+                const objetivo = est.ruta[est.indice + 1];
+                if (!objetivo) {
+                    // Llegó al destino
+                    est.estado = 'llegado';
+                    if (est.polyline) { map.removeLayer(est.polyline); est.polyline = null; }
+                    actualizarPanelUnidades();
+                    return;
+                }
+
+                const actual = est.marker.getLatLng();
+                const dLat = objetivo.lat - actual.lat;
+                const dLng = objetivo.lng - actual.lng;
+                const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+                // Rotar icono hacia la dirección de movimiento
+                const angulo = Math.atan2(dLng, dLat) * 180 / Math.PI;
+
+                if (dist < 0.00008) {
+                    est.indice++;
+                } else {
+                    // Avanzar un pequeño paso hacia el siguiente nodo
+                    const paso = Math.min(est.velocidad * 0.00008, dist);
+                    const nuevo = L.latLng(
+                        actual.lat + (dLat / dist) * paso,
+                        actual.lng + (dLng / dist) * paso
+                    );
+                    est.marker.setLatLng(nuevo);
+                    // Rotación visual
+                    const el = est.marker.getElement();
+                    if (el) el.querySelector('.custom-marker').style.transform = `rotate(${angulo}deg)`;
+                }
+            });
+        }
+
+        function actualizarPanelUnidades() {
+            const cont = document.getElementById('unitsStatus');
+            cont.innerHTML = '';
+            Object.values(estadoUnidades).forEach(est => {
+                const chip = document.createElement('div');
+                chip.className = 'unit-chip ' + (est.info.tipo === 'patrol' ? 'patrol' : 'ambulance');
+                let estadoTxt = 'En camino';
+                if (est.estado === 'llegado') estadoTxt = 'En el lugar';
+                else if (est.estado === 'buscando') estadoTxt = 'Asignando...';
+                else if (est.estado === 'error') estadoTxt = 'Sin ruta';
+                chip.innerHTML = `<span class="dot"></span> ${est.info.id} · ${estadoTxt}`;
+                cont.appendChild(chip);
+            });
+        }
+
+        // ==========================================
+        // 8. AUTO-INICIO
+        // ==========================================
+        window.addEventListener('load', () => {
+            setTimeout(() => activarGeolocalizacion(true), 600);
+        });
+    </script>
 </body>
 </html>
