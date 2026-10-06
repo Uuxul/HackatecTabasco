@@ -1,8 +1,9 @@
 <nav class="bottom-nav">
 
-    <button
+
+    <a
+        href="index.php"
         class="nav-item active"
-        onclick="window.location.href='index.html'"
     >
 
         <i class="fa-solid fa-house"></i>
@@ -11,12 +12,13 @@
             Inicio
         </span>
 
-    </button>
+    </a>
 
 
-    <button
+
+    <a
+        href="reporte.php"
         class="nav-item"
-        onclick="window.location.href='reporte.html'"
     >
 
         <i class="fa-solid fa-clipboard-list"></i>
@@ -25,26 +27,28 @@
             Reportes
         </span>
 
-    </button>
+    </a>
 
 
-    <button
+
+    <a
+        href="historial.php"
         class="nav-item"
-        onclick="window.location.href='historial.html'"
     >
 
-        <i class="fa-solid fa-clock"></i>
+        <i class="fa-solid fa-clock-rotate-left"></i>
 
         <span>
             Historial
         </span>
 
-    </button>
+    </a>
 
 
-    <button
+
+    <a
+        href="perfil.php"
         class="nav-item"
-        onclick="window.location.href='perfil.html'"
     >
 
         <i class="fa-solid fa-user"></i>
@@ -53,6 +57,7 @@
             Perfil
         </span>
 
-    </button>
+    </a>
+
 
 </nav>

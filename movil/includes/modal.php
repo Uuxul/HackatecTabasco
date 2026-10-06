@@ -3,14 +3,18 @@
     id="emergencyModal"
 >
 
+
     <div class="modal-box">
 
 
+        <!-- ICONO -->
+
         <div class="modal-icon">
 
-            <i class="fa-solid fa-bell"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
 
         </div>
+
 
 
         <h2>
@@ -18,35 +22,53 @@
         </h2>
 
 
+
         <p>
 
-            Tu ubicación será enviada al centro de monitoreo
-            para atender la emergencia.
+            Se enviará tu ubicación actual al centro de monitoreo
+            para que puedan atender tu emergencia.
 
         </p>
 
+
+
+        <!-- GPS -->
 
         <div
             class="gps-preview"
             id="gpsPreview"
         >
 
-            Obteniendo ubicación...
+            <i class="fa-solid fa-location-dot"></i>
+
+            <span>
+                Obteniendo ubicación...
+            </span>
 
         </div>
 
 
+
+        <!-- CONFIRMAR -->
+
         <button
+            type="button"
             class="confirm"
             id="confirmEmergency"
         >
+
+            <i class="fa-solid fa-paper-plane"></i>
 
             ENVIAR EMERGENCIA
 
         </button>
 
 
+
+        <!-- CANCELAR -->
+
         <button
+            type="button"
             class="cancel"
             id="cancelEmergency"
         >
@@ -57,5 +79,6 @@
 
 
     </div>
+
 
 </div>
