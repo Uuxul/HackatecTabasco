@@ -7,9 +7,6 @@
 
 const NUMERO_EMERGENCIAS = "99971557245";
 
-const API_EMERGENCIAS =
-    "/api/emergencias";
-
 
 /* ==========================================================
    VARIABLES
@@ -870,7 +867,7 @@ function configurarLlamada() {
     ) {
 
         numero.textContent =
-            NUMERO_EMERGENCIAS;
+            "";
 
     }
 

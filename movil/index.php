@@ -10,6 +10,8 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
+    <meta name="theme-color" content="#062b50">
+
     <title>CityFix Emergencias</title>
 
 
@@ -34,7 +36,7 @@
     >
 
 
-    <!-- NUESTROS ESTILOS -->
+    <!-- ESTILOS -->
     <link
         rel="stylesheet"
         href="css/styles.css"
@@ -46,23 +48,44 @@
 <body>
 
 
+<!-- =========================================
+     APP
+========================================= -->
+
 <div class="app">
 
 
-    <!-- ================================
+    <!-- =====================================
          HEADER
-    ================================= -->
+    ====================================== -->
 
     <header class="header">
 
         <div class="header-top">
 
 
+            <!-- BOTÓN MENÚ -->
+
+            <button
+                type="button"
+                class="menu-button"
+                id="menuButton"
+                aria-label="Abrir menú"
+            >
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+
+
+            <!-- LOGO -->
+
             <div class="brand">
 
                 <div class="shield">
 
-                    <i class="fa-solid fa-person"></i>
+                    <i class="fa-solid fa-shield-halved"></i>
 
                 </div>
 
@@ -82,7 +105,15 @@
             </div>
 
 
-            <button class="bell">
+
+            <!-- NOTIFICACIONES -->
+
+            <button
+                type="button"
+                class="bell"
+                id="notificationButton"
+                aria-label="Notificaciones"
+            >
 
                 <i class="fa-regular fa-bell"></i>
 
@@ -102,9 +133,9 @@
 
 
 
-    <!-- ================================
+    <!-- =====================================
          MAPA
-    ================================= -->
+    ====================================== -->
 
     <section class="map-wrapper">
 
@@ -112,7 +143,8 @@
         <div id="map"></div>
 
 
-        <!-- INFORMACIÓN GPS -->
+
+        <!-- UBICACIÓN -->
 
         <div class="location-card">
 
@@ -128,12 +160,13 @@
 
 
 
-        <!-- CONTROLES DEL MAPA -->
+        <!-- CONTROLES -->
 
         <div class="map-controls">
 
 
             <button
+                type="button"
                 class="map-control"
                 id="centerLocation"
                 title="Mi ubicación"
@@ -145,12 +178,13 @@
 
 
             <button
+                type="button"
                 class="map-control"
                 id="zoomLocation"
                 title="Acercar"
             >
 
-                <i class="fa-solid fa-crosshairs"></i>
+                <i class="fa-solid fa-plus"></i>
 
             </button>
 
@@ -162,9 +196,9 @@
 
 
 
-    <!-- ================================
+    <!-- =====================================
          CONTENIDO
-    ================================= -->
+    ====================================== -->
 
     <main class="content">
 
@@ -172,6 +206,7 @@
         <!-- SOLICITAR AYUDA -->
 
         <button
+            type="button"
             class="help-button"
             id="helpButton"
         >
@@ -182,15 +217,14 @@
             <div class="help-text">
 
                 <strong>
-                    SOLICITAR AYUDA
+                    SOLICITAR AYUDA PARA MÍ
                 </strong>
 
                 <span>
-                    Reporta una emergencia
+                    Envía tu ubicación al centro de monitoreo
                 </span>
 
             </div>
-
 
         </button>
 
@@ -199,10 +233,10 @@
         <!-- LLAMAR -->
 
         <button
+            type="button"
             class="call-button"
             id="callButton"
         >
-
 
             <i class="fa-solid fa-phone"></i>
 
@@ -217,11 +251,10 @@
                     class="call-number"
                     id="emergencyNumberText"
                 >
-                    911
+                    Cargando...
                 </span>
 
             </div>
-
 
         </button>
 
@@ -235,13 +268,13 @@
 
 
 
-        <!-- REPORTE -->
+        <!-- CREAR REPORTE -->
 
         <button
+            type="button"
             class="report-button"
-            onclick="window.location.href='reporte.html'"
+            onclick="window.location.href='reporte.php'"
         >
-
 
             <i class="fa-solid fa-clipboard-list"></i>
 
@@ -258,7 +291,6 @@
 
             </div>
 
-
         </button>
 
 
@@ -266,40 +298,53 @@
 
 
 
-    <!-- ================================
-         SIDEBAR
-    ================================= -->
-
-    <div id="sidebar-container"></div>
-
-
-
-    <!-- ================================
+    <!-- =====================================
          NAVBAR
-    ================================= -->
+    ====================================== -->
 
-    <div id="navbar-container"></div>
+    <?php
+        include __DIR__ . '/include/navbar.php';
+    ?>
 
 
 </div>
 
 
 
-<!-- ================================
+<!-- =========================================
+     SIDEBAR
+========================================= -->
+
+<?php
+    include __DIR__ . '/include/sidebar.php';
+?>
+
+
+
+<!-- =========================================
      MODAL
-================================= -->
+========================================= -->
 
-<div id="modal-container"></div>
+<?php
+    include __DIR__ . '/include/modal.php';
+?>
 
 
 
-<!-- LEAFLET -->
+<!-- =========================================
+     LEAFLET JS
+========================================= -->
+
 <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 ></script>
 
 
-<!-- NUESTRA APP -->
+
+<!-- =========================================
+     APP JS
+========================================= -->
+
 <script src="js/app.js"></script>
 
 
