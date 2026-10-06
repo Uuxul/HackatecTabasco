@@ -1,1598 +1,308 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
 
     <title>CityFix Emergencias</title>
 
-    <!-- LEAFLET: MISMA LIBRERÍA DE TU DASHBOARD -->
-    <link rel="stylesheet"
-          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-    <!-- ICONOS -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- LEAFLET -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
 
-    <!-- FUENTE -->
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 
-    <style>
-        :root {
-            --navy: #062b50;
-            --navy-dark: #041f3b;
-            --blue: #087ed8;
-            --location-blue: #4285f4;
-            --red: #ff202b;
-            --text: #092e57;
-            --muted: #7c8997;
-            --border: #cdd5dc;
-            --background: #f7f9fb;
-            --white: #ffffff;
-        }
+    <!-- FONT AWESOME -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Inter", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
 
-        html,
-        body {
-            width: 100%;
-            min-height: 100%;
-            background: #e9eef3;
-        }
+    <!-- GOOGLE FONT -->
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    >
 
-        body {
-            display: flex;
-            justify-content: center;
-        }
 
-        .app {
-            position: relative;
-            width: 100%;
-            max-width: 430px;
-            min-height: 100vh;
-            background: var(--background);
-            overflow: hidden;
-        }
+    <!-- NUESTROS ESTILOS -->
+    <link
+        rel="stylesheet"
+        href="css/styles.css"
+    >
 
-        /* =====================================
-           HEADER
-        ===================================== */
-
-        .header {
-            height: 158px;
-            background: linear-gradient(135deg, #082e54, #052443);
-            color: white;
-            padding: 25px 25px 15px;
-            position: relative;
-            z-index: 1000;
-        }
-
-        .header-top {
-            height: 76px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .shield {
-            width: 56px;
-            height: 64px;
-            border: 3px solid white;
-            border-radius: 8px 8px 20px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 26px;
-            background: rgba(255,255,255,.08);
-        }
-
-        .brand-text h1 {
-            font-size: 34px;
-            line-height: 31px;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        .brand-text span {
-            display: block;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 5px;
-        }
-
-        .bell {
-            position: absolute;
-            right: 0;
-            border: none;
-            background: transparent;
-            color: white;
-            font-size: 23px;
-            cursor: pointer;
-        }
-
-        .slogan {
-            text-align: center;
-            font-size: 16px;
-            margin-top: 8px;
-            opacity: .95;
-        }
-
-        /* =====================================
-           MAPA
-        ===================================== */
-
-        .map-wrapper {
-            height: 235px;
-            position: relative;
-            background: #e8edf1;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        /* Ocultamos zoom estándar para aspecto móvil */
-        .leaflet-control-zoom {
-            display: none;
-        }
-
-        .map-controls {
-            position: absolute;
-            right: 17px;
-            top: 76px;
-            z-index: 800;
-            display: flex;
-            flex-direction: column;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 3px 12px rgba(0,0,0,.22);
-            overflow: hidden;
-        }
-
-        .map-control {
-            width: 45px;
-            height: 45px;
-            border: none;
-            background: white;
-            color: var(--navy);
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .map-control + .map-control {
-            border-top: 1px solid #e7e7e7;
-        }
-
-        /* =====================================
-           PUNTO AZUL
-        ===================================== */
-
-        .user-marker {
-            position: relative;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .user-pulse {
-            position: absolute;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: rgba(66,133,244,.20);
-            animation: pulse 2s infinite;
-        }
-
-        .user-dot {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--location-blue);
-            border: 4px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,.35);
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(.7);
-                opacity: 1;
-            }
-            70% {
-                transform: scale(1.6);
-                opacity: 0;
-            }
-            100% {
-                transform: scale(.7);
-                opacity: 0;
-            }
-        }
-
-        /* =====================================
-           BURBUJA UBICACIÓN
-        ===================================== */
-
-        .location-card {
-            position: absolute;
-            right: 72px;
-            top: 94px;
-            z-index: 700;
-            background: rgba(255,255,255,.96);
-            border-radius: 13px;
-            padding: 9px 13px;
-            box-shadow: 0 3px 12px rgba(0,0,0,.15);
-            max-width: 190px;
-        }
-
-        .location-card strong {
-            display: block;
-            font-size: 13px;
-            color: #263849;
-        }
-
-        .location-card span {
-            display: block;
-            margin-top: 2px;
-            color: #6f7d89;
-            font-size: 10px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* =====================================
-           CONTENIDO
-        ===================================== */
-
-        .content {
-            position: relative;
-            z-index: 20;
-            margin-top: -12px;
-            padding: 17px 20px 95px;
-            border-radius: 20px 20px 0 0;
-            background: var(--background);
-        }
-
-        /* =====================================
-           BOTÓN AYUDA
-        ===================================== */
-
-        .help-button {
-            width: 100%;
-            min-height: 82px;
-            border: none;
-            border-radius: 18px;
-            background: linear-gradient(135deg, #ff1825, #ff2b32);
-            color: white;
-            box-shadow: 0 7px 16px rgba(239,30,44,.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            cursor: pointer;
-        }
-
-        .help-button:active {
-            transform: scale(.985);
-        }
-
-        .help-button i {
-            font-size: 34px;
-        }
-
-        .help-text {
-            text-align: left;
-        }
-
-        .help-text strong {
-            display: block;
-            font-size: 19px;
-            font-weight: 800;
-        }
-
-        .help-text span {
-            display: block;
-            font-size: 13px;
-            margin-top: 3px;
-            opacity: .9;
-        }
-
-        /* =====================================
-           LLAMAR
-        ===================================== */
-
-        .call-button {
-            margin-top: 13px;
-            width: 100%;
-            min-height: 79px;
-            border: 2px solid #b9c3cb;
-            border-radius: 16px;
-            background: white;
-            color: var(--navy);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 18px;
-            cursor: pointer;
-        }
-
-        .call-button i {
-            font-size: 29px;
-        }
-
-        .call-text {
-            text-align: center;
-        }
-
-        .call-text strong {
-            display: block;
-            font-size: 16px;
-        }
-
-        .call-number {
-            display: block;
-            font-size: 25px;
-            line-height: 26px;
-            font-weight: 800;
-        }
-
-        /* =====================================
-           REPORTE
-        ===================================== */
-
-        .non-emergency {
-            margin: 22px 2px 9px;
-            color: #243b55;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .report-button {
-            width: 100%;
-            min-height: 78px;
-            border: 1.5px solid #d2d9df;
-            border-radius: 16px;
-            background: white;
-            display: flex;
-            align-items: center;
-            padding: 0 35px;
-            gap: 25px;
-            color: var(--navy);
-            cursor: pointer;
-        }
-
-        .report-button i {
-            color: #087ed8;
-            font-size: 29px;
-        }
-
-        .report-text {
-            text-align: left;
-        }
-
-        .report-text strong {
-            display: block;
-            font-size: 16px;
-        }
-
-        .report-text span {
-            display: block;
-            margin-top: 3px;
-            font-size: 11px;
-            color: #8b959f;
-        }
-
-        /* =====================================
-           NAVEGACIÓN
-        ===================================== */
-
-        .bottom-nav {
-            position: fixed;
-            z-index: 2000;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 430px;
-            height: 75px;
-            padding-bottom: env(safe-area-inset-bottom);
-            background: rgba(255,255,255,.97);
-            border-top: 1px solid #e1e5e9;
-            display: grid;
-            grid-template-columns: repeat(4,1fr);
-            box-shadow: 0 -3px 15px rgba(0,0,0,.04);
-        }
-
-        .nav-item {
-            border: none;
-            background: transparent;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            color: #8b99a5;
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .nav-item i {
-            font-size: 21px;
-        }
-
-        .nav-item.active {
-            color: #0589e5;
-        }
-
-        /* =====================================
-           MODAL
-        ===================================== */
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 5000;
-            background: rgba(2,15,29,.68);
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-box {
-            width: 100%;
-            max-width: 430px;
-            background: white;
-            border-radius: 25px 25px 0 0;
-            padding: 27px 22px 32px;
-            text-align: center;
-        }
-
-        .modal-icon {
-            width: 68px;
-            height: 68px;
-            margin: auto;
-            border-radius: 50%;
-            background: #fee2e2;
-            color: var(--red);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 29px;
-        }
-
-        .modal-box h2 {
-            color: var(--navy);
-            margin-top: 14px;
-            font-size: 21px;
-        }
-
-        .modal-box p {
-            color: #6b7783;
-            margin-top: 8px;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .gps-preview {
-            margin-top: 15px;
-            background: #f3f7fb;
-            border-radius: 12px;
-            padding: 12px;
-            color: #526273;
-            font-size: 12px;
-        }
-
-        .confirm {
-            width: 100%;
-            border: none;
-            border-radius: 13px;
-            padding: 15px;
-            margin-top: 18px;
-            background: var(--red);
-            color: white;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .cancel {
-            width: 100%;
-            border: none;
-            padding: 13px;
-            background: transparent;
-            color: #6d7985;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        @media (min-width: 431px) {
-            .app {
-                box-shadow: 0 0 35px rgba(0,0,0,.12);
-            }
-        }
-    </style>
 </head>
+
 
 <body>
 
+
 <div class="app">
 
-    <!-- HEADER -->
+
+    <!-- ================================
+         HEADER
+    ================================= -->
+
     <header class="header">
 
         <div class="header-top">
 
+
             <div class="brand">
 
                 <div class="shield">
+
                     <i class="fa-solid fa-person"></i>
+
                 </div>
 
+
                 <div class="brand-text">
-                    <h1>CITYFIX</h1>
-                    <span>EMERGENCIAS</span>
+
+                    <h1>
+                        CITYFIX
+                    </h1>
+
+                    <span>
+                        EMERGENCIAS
+                    </span>
+
                 </div>
 
             </div>
 
+
             <button class="bell">
+
                 <i class="fa-regular fa-bell"></i>
+
             </button>
+
 
         </div>
 
+
         <div class="slogan">
+
             Tu seguridad, nuestra prioridad
+
         </div>
 
     </header>
 
 
-    <!-- MAPA -->
+
+    <!-- ================================
+         MAPA
+    ================================= -->
+
     <section class="map-wrapper">
+
 
         <div id="map"></div>
 
+
+        <!-- INFORMACIÓN GPS -->
+
         <div class="location-card">
-            <strong>Tu ubicación</strong>
+
+            <strong>
+                Tu ubicación
+            </strong>
+
             <span id="locationText">
                 Buscando ubicación...
             </span>
+
         </div>
 
+
+
+        <!-- CONTROLES DEL MAPA -->
+
         <div class="map-controls">
+
 
             <button
                 class="map-control"
                 id="centerLocation"
                 title="Mi ubicación"
             >
+
                 <i class="fa-solid fa-location-crosshairs"></i>
+
             </button>
+
 
             <button
                 class="map-control"
                 id="zoomLocation"
                 title="Acercar"
             >
+
                 <i class="fa-solid fa-crosshairs"></i>
+
             </button>
 
+
         </div>
+
 
     </section>
 
 
-    <!-- CONTENIDO -->
+
+    <!-- ================================
+         CONTENIDO
+    ================================= -->
+
     <main class="content">
+
+
+        <!-- SOLICITAR AYUDA -->
 
         <button
             class="help-button"
             id="helpButton"
         >
 
-            <i class="fa-solid fa-siren-on"></i>
+            <i class="fa-solid fa-bell"></i>
+
 
             <div class="help-text">
-                <strong>SOLICITAR AYUDA</strong>
-                <span>Reporta una emergencia</span>
+
+                <strong>
+                    SOLICITAR AYUDA
+                </strong>
+
+                <span>
+                    Reporta una emergencia
+                </span>
+
             </div>
+
 
         </button>
 
+
+
+        <!-- LLAMAR -->
 
         <button
             class="call-button"
             id="callButton"
         >
 
+
             <i class="fa-solid fa-phone"></i>
 
-            <div class="call-text">
-                <strong>LLAMAR A EMERGENCIAS</strong>
 
-                <!-- ESTE TEXTO CAMBIARÁ CUANDO DEFINAMOS EL NÚMERO -->
+            <div class="call-text">
+
+                <strong>
+                    LLAMAR A EMERGENCIAS
+                </strong>
+
                 <span
                     class="call-number"
                     id="emergencyNumberText"
                 >
                     911
                 </span>
+
             </div>
+
 
         </button>
 
 
+
         <div class="non-emergency">
+
             ¿No es una emergencia?
+
         </div>
 
+
+
+        <!-- REPORTE -->
 
         <button
             class="report-button"
             onclick="window.location.href='reporte.html'"
         >
 
+
             <i class="fa-solid fa-clipboard-list"></i>
 
+
             <div class="report-text">
-                <strong>CREAR REPORTE</strong>
-                <span>Ayúdanos a mejorar tu ciudad</span>
+
+                <strong>
+                    CREAR REPORTE
+                </strong>
+
+                <span>
+                    Ayúdanos a mejorar tu ciudad
+                </span>
+
             </div>
 
+
         </button>
+
 
     </main>
 
 
-    <!-- NAVEGACIÓN -->
-    <nav class="bottom-nav">
 
-        <button class="nav-item active">
-            <i class="fa-solid fa-house"></i>
-            <span>Inicio</span>
-        </button>
+    <!-- ================================
+         SIDEBAR
+    ================================= -->
 
-        <button
-            class="nav-item"
-            onclick="window.location.href='reporte.html'"
-        >
-            <i class="fa-solid fa-clipboard-list"></i>
-            <span>Reportes</span>
-        </button>
+    <div id="sidebar-container"></div>
 
-        <button
-            class="nav-item"
-            onclick="window.location.href='historial.html'"
-        >
-            <i class="fa-solid fa-clock"></i>
-            <span>Historial</span>
-        </button>
 
-        <button
-            class="nav-item"
-            onclick="window.location.href='perfil.html'"
-        >
-            <i class="fa-solid fa-user"></i>
-            <span>Perfil</span>
-        </button>
 
-    </nav>
+    <!-- ================================
+         NAVBAR
+    ================================= -->
+
+    <div id="navbar-container"></div>
+
 
 </div>
 
 
-<!-- MODAL -->
-<div
-    class="modal"
-    id="emergencyModal"
->
 
-    <div class="modal-box">
+<!-- ================================
+     MODAL
+================================= -->
 
-        <div class="modal-icon">
-            <i class="fa-solid fa-bell"></i>
-        </div>
+<div id="modal-container"></div>
 
-        <h2>Solicitar ayuda</h2>
 
-        <p>
-            Tu ubicación será enviada al centro de monitoreo
-            para atender la emergencia.
-        </p>
 
-        <div
-            class="gps-preview"
-            id="gpsPreview"
-        >
-            Obteniendo ubicación...
-        </div>
+<!-- LEAFLET -->
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
 
-        <button
-            class="confirm"
-            id="confirmEmergency"
-        >
-            ENVIAR EMERGENCIA
-        </button>
 
-        <button
-            class="cancel"
-            id="cancelEmergency"
-        >
-            Cancelar
-        </button>
+<!-- NUESTRA APP -->
+<script src="js/app.js"></script>
 
-    </div>
-
-</div>
-
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-
-<script>
-
-"use strict";
-
-
-/* ============================================================
-   CONFIGURACIÓN
-============================================================ */
-
-/*
-    CUANDO DEFINAMOS EL NÚMERO,
-    SOLO CAMBIAS ESTA VARIABLE.
-
-    Ejemplo:
-    const NUMERO_EMERGENCIAS = "9991234567";
-*/
-
-const NUMERO_EMERGENCIAS = "911";
-
-
-/*
-    Aquí pondremos después la dirección real
-    de tu backend.
-
-    Ejemplo:
-
-    http://localhost:3000/api/emergencias
-*/
-
-const API_EMERGENCIAS = "/api/emergencias";
-
-
-/* ============================================================
-   VARIABLES
-============================================================ */
-
-let ubicacionActual = null;
-
-let marcadorUsuario = null;
-
-let circuloPrecision = null;
-
-let emergenciaActiva = false;
-
-let idEmergenciaActiva = null;
-
-let primeraUbicacion = true;
-
-
-/* ============================================================
-   MAPA
-============================================================ */
-
-const map = L.map(
-    "map",
-    {
-        zoomControl: false,
-        attributionControl: false
-    }
-).setView(
-    [20.9754, -89.6169],
-    15
-);
-
-
-/*
-   MISMA BASE DE MAPA QUE TU DASHBOARD ACTUAL.
-*/
-
-L.tileLayer(
-    "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
-    {
-        maxZoom: 20,
-        subdomains: [
-            "mt0",
-            "mt1",
-            "mt2",
-            "mt3"
-        ]
-    }
-).addTo(map);
-
-
-/* ============================================================
-   ICONO USUARIO
-============================================================ */
-
-const iconoUsuario = L.divIcon({
-
-    className: "",
-
-    html: `
-        <div class="user-marker">
-            <div class="user-pulse"></div>
-            <div class="user-dot"></div>
-        </div>
-    `,
-
-    iconSize: [44,44],
-
-    iconAnchor: [22,22]
-
-});
-
-
-/* ============================================================
-   GPS AUTOMÁTICO
-============================================================ */
-
-function iniciarGPS() {
-
-    if (!navigator.geolocation) {
-
-        document.getElementById(
-            "locationText"
-        ).textContent =
-            "GPS no disponible";
-
-        return;
-    }
-
-
-    navigator.geolocation.watchPosition(
-
-        posicionRecibida,
-
-        errorGPS,
-
-        {
-            enableHighAccuracy: true,
-
-            maximumAge: 0,
-
-            timeout: 15000
-        }
-
-    );
-
-}
-
-
-/* ============================================================
-   RECIBIR POSICIÓN
-============================================================ */
-
-function posicionRecibida(position) {
-
-    ubicacionActual = {
-
-        lat:
-            position.coords.latitude,
-
-        lng:
-            position.coords.longitude,
-
-        accuracy:
-            position.coords.accuracy,
-
-        speed:
-            position.coords.speed,
-
-        heading:
-            position.coords.heading,
-
-        timestamp:
-            Date.now()
-
-    };
-
-
-    actualizarMapa();
-
-
-    /*
-       Si existe una emergencia activa,
-       seguimos actualizando su posición
-       para el dashboard.
-    */
-
-    if (
-        emergenciaActiva &&
-        idEmergenciaActiva
-    ) {
-
-        actualizarUbicacionDashboard();
-
-    }
-
-}
-
-
-/* ============================================================
-   ACTUALIZAR MAPA
-============================================================ */
-
-function actualizarMapa() {
-
-    if (!ubicacionActual) {
-        return;
-    }
-
-
-    const posicion = [
-
-        ubicacionActual.lat,
-
-        ubicacionActual.lng
-
-    ];
-
-
-    document.getElementById(
-        "locationText"
-    ).textContent =
-
-        `GPS activo · ±${Math.round(
-            ubicacionActual.accuracy
-        )} m`;
-
-
-    document.getElementById(
-        "gpsPreview"
-    ).innerHTML = `
-
-        <strong>Ubicación encontrada</strong>
-
-        <br>
-
-        Lat:
-        ${ubicacionActual.lat.toFixed(6)}
-
-        <br>
-
-        Lng:
-        ${ubicacionActual.lng.toFixed(6)}
-
-        <br>
-
-        Precisión:
-        ±${Math.round(
-            ubicacionActual.accuracy
-        )} m
-
-    `;
-
-
-    /* PUNTO AZUL */
-
-    if (!marcadorUsuario) {
-
-        marcadorUsuario = L.marker(
-
-            posicion,
-
-            {
-                icon: iconoUsuario,
-
-                zIndexOffset: 1000
-            }
-
-        ).addTo(map);
-
-    }
-
-    else {
-
-        marcadorUsuario.setLatLng(
-            posicion
-        );
-
-    }
-
-
-    /* CÍRCULO DE PRECISIÓN */
-
-    if (!circuloPrecision) {
-
-        circuloPrecision = L.circle(
-
-            posicion,
-
-            {
-                radius:
-                    ubicacionActual.accuracy,
-
-                color:
-                    "#4285f4",
-
-                fillColor:
-                    "#4285f4",
-
-                fillOpacity:
-                    .08,
-
-                opacity:
-                    .25,
-
-                weight:
-                    1
-            }
-
-        ).addTo(map);
-
-    }
-
-    else {
-
-        circuloPrecision.setLatLng(
-            posicion
-        );
-
-        circuloPrecision.setRadius(
-            ubicacionActual.accuracy
-        );
-
-    }
-
-
-    /* PRIMERA UBICACIÓN */
-
-    if (primeraUbicacion) {
-
-        map.flyTo(
-
-            posicion,
-
-            17,
-
-            {
-                duration: 1.2
-            }
-
-        );
-
-
-        primeraUbicacion = false;
-
-    }
-
-}
-
-
-/* ============================================================
-   ERROR GPS
-============================================================ */
-
-function errorGPS(error) {
-
-    console.error(
-        "Error GPS:",
-        error
-    );
-
-
-    let mensaje =
-        "No pudimos obtener tu ubicación";
-
-
-    if (error.code === 1) {
-
-        mensaje =
-            "Permite el acceso a tu ubicación";
-
-    }
-
-
-    if (error.code === 2) {
-
-        mensaje =
-            "Ubicación no disponible";
-
-    }
-
-
-    if (error.code === 3) {
-
-        mensaje =
-            "Buscando señal GPS...";
-
-    }
-
-
-    document.getElementById(
-        "locationText"
-    ).textContent =
-        mensaje;
-
-}
-
-
-/* ============================================================
-   CENTRAR MAPA
-============================================================ */
-
-document.getElementById(
-    "centerLocation"
-).addEventListener(
-    "click",
-    function() {
-
-        if (!ubicacionActual) {
-            return;
-        }
-
-
-        map.flyTo(
-
-            [
-                ubicacionActual.lat,
-                ubicacionActual.lng
-            ],
-
-            17,
-
-            {
-                duration: .8
-            }
-
-        );
-
-    }
-);
-
-
-/* ============================================================
-   ACERCAR
-============================================================ */
-
-document.getElementById(
-    "zoomLocation"
-).addEventListener(
-    "click",
-    function() {
-
-        if (!ubicacionActual) {
-            return;
-        }
-
-
-        map.flyTo(
-
-            [
-                ubicacionActual.lat,
-                ubicacionActual.lng
-            ],
-
-            19,
-
-            {
-                duration: .8
-            }
-
-        );
-
-    }
-);
-
-
-/* ============================================================
-   MODAL EMERGENCIA
-============================================================ */
-
-const modal =
-    document.getElementById(
-        "emergencyModal"
-    );
-
-
-document.getElementById(
-    "helpButton"
-).addEventListener(
-    "click",
-    function() {
-
-        modal.classList.add(
-            "show"
-        );
-
-    }
-);
-
-
-document.getElementById(
-    "cancelEmergency"
-).addEventListener(
-    "click",
-    function() {
-
-        modal.classList.remove(
-            "show"
-        );
-
-    }
-);
-
-
-/* ============================================================
-   SOLICITAR AYUDA
-============================================================ */
-
-document.getElementById(
-    "confirmEmergency"
-).addEventListener(
-    "click",
-    async function() {
-
-        if (!ubicacionActual) {
-
-            alert(
-                "Todavía estamos obteniendo tu ubicación."
-            );
-
-            return;
-        }
-
-
-        const resultado =
-            await enviarEmergenciaAlDashboard(
-                "BOTON_AYUDA"
-            );
-
-
-        if (resultado) {
-
-            modal.classList.remove(
-                "show"
-            );
-
-            alert(
-                "Emergencia enviada al centro de monitoreo."
-            );
-
-        }
-
-    }
-);
-
-
-/* ============================================================
-   LLAMAR
-
-   PASO 1:
-   manda la ubicación.
-
-   PASO 2:
-   abre el marcador telefónico.
-============================================================ */
-
-document.getElementById(
-    "callButton"
-).addEventListener(
-    "click",
-    async function() {
-
-        if (!ubicacionActual) {
-
-            alert(
-                "Esperando tu ubicación GPS."
-            );
-
-            return;
-        }
-
-
-        /*
-           Primero registramos la emergencia.
-        */
-
-        await enviarEmergenciaAlDashboard(
-            "LLAMADA"
-        );
-
-
-        /*
-           Después abrimos la aplicación
-           telefónica del dispositivo.
-        */
-
-        window.location.href =
-            "tel:" + NUMERO_EMERGENCIAS;
-
-    }
-);
-
-
-/* ============================================================
-   ENVIAR EMERGENCIA AL DASHBOARD
-============================================================ */
-
-async function enviarEmergenciaAlDashboard(
-    origen
-) {
-
-    if (!ubicacionActual) {
-        return false;
-    }
-
-
-    const emergencia = {
-
-        origen: origen,
-
-        tipo:
-            "EMERGENCIA",
-
-        latitud:
-            ubicacionActual.lat,
-
-        longitud:
-            ubicacionActual.lng,
-
-        precision:
-            ubicacionActual.accuracy,
-
-        estado:
-            "ACTIVA",
-
-        fecha:
-            new Date().toISOString()
-
-    };
-
-
-    console.log(
-        "EMERGENCIA:",
-        emergencia
-    );
-
-
-    /*
-       --------------------------------------------------
-       PROVISIONAL
-
-       Guardamos localmente para que puedas probar
-       la interfaz sin backend.
-       --------------------------------------------------
-    */
-
-    localStorage.setItem(
-
-        "ultimaEmergencia",
-
-        JSON.stringify(
-            emergencia
-        )
-
-    );
-
-
-    /*
-       --------------------------------------------------
-       CUANDO TENGAMOS EL BACKEND:
-
-       Este fetch enviará la emergencia al servidor.
-
-       Por ahora lo dejamos preparado.
-       --------------------------------------------------
-    */
-
-
-    try {
-
-        const response =
-            await fetch(
-
-                API_EMERGENCIAS,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify(
-                            emergencia
-                        )
-
-                }
-
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Servidor no disponible"
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        idEmergenciaActiva =
-            data.id;
-
-
-        emergenciaActiva =
-            true;
-
-
-        return true;
-
-    }
-
-    catch (error) {
-
-
-        /*
-           Mientras todavía no exista el backend
-           no rompemos la interfaz.
-
-           Podrás probar GPS y diseño.
-        */
-
-        console.warn(
-            "Backend todavía no conectado:",
-            error
-        );
-
-
-        return true;
-
-    }
-
-}
-
-
-/* ============================================================
-   ACTUALIZAR POSICIÓN DE EMERGENCIA
-
-   Se ejecuta cuando el ciudadano se mueve
-   y hay una emergencia activa.
-============================================================ */
-
-async function actualizarUbicacionDashboard() {
-
-    if (
-        !idEmergenciaActiva ||
-        !ubicacionActual
-    ) {
-        return;
-    }
-
-
-    try {
-
-        await fetch(
-
-            `${API_EMERGENCIAS}/${idEmergenciaActiva}/ubicacion`,
-
-            {
-
-                method:
-                    "PATCH",
-
-                headers: {
-
-                    "Content-Type":
-                        "application/json"
-
-                },
-
-                body:
-                    JSON.stringify({
-
-                        latitud:
-                            ubicacionActual.lat,
-
-                        longitud:
-                            ubicacionActual.lng,
-
-                        precision:
-                            ubicacionActual.accuracy,
-
-                        fecha:
-                            new Date().toISOString()
-
-                    })
-
-            }
-
-        );
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "No se pudo actualizar GPS:",
-            error
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   NÚMERO MOSTRADO
-============================================================ */
-
-document.getElementById(
-    "emergencyNumberText"
-).textContent =
-    NUMERO_EMERGENCIAS;
-
-
-/* ============================================================
-   INICIO
-============================================================ */
-
-window.addEventListener(
-    "load",
-    function() {
-
-        setTimeout(
-            function() {
-
-                map.invalidateSize();
-
-                iniciarGPS();
-
-            },
-            300
-        );
-
-    }
-);
-
-</script>
 
 </body>
+
 </html>
