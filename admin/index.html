@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityFix - Centro de Monitoreo</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-sidebar: #0B1B36;
+            --bg-active: #1652C6;
+            --bg-body: #F4F7FC;
+            --bg-card: #FFFFFF;
+            --bg-input: #FFFFFF;
+            --border: #E2E8F0;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --white: #FFFFFF;
+            --red: #EF4444;
+            --red-light: #FEE2E2;
+            --blue: #3B82F6;
+            --blue-light: #DBEAFE;
+            --orange: #F97316;
+            --orange-light: #FFEDD5;
+            --yellow: #EAB308;
+            --yellow-light: #FEF9C3;
+            --green: #10B981;
+            --green-light: #D1FAE5;
+            --purple: #8B5CF6;
+            --purple-light: #EDE9FE;
+            --shadow: 0 2px 10px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+        }
+
+        body.dark {
+            --bg-sidebar: #060D1F;
+            --bg-body: #0F172A;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border: #334155;
+            --text-main: #F1F5F9;
+            --text-muted: #94A3B8;
+            --shadow: 0 2px 10px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { display: flex; height: 100vh; background-color: var(--bg-body); overflow: hidden; transition: background 0.3s; }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar { width: 260px; background-color: var(--bg-sidebar); color: var(--white); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+        .logo-container { display: flex; align-items: center; gap: 12px; padding: 0 20px 30px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo-icon { background-color: var(--white); color: var(--bg-sidebar); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+        .logo-text p { font-size: 9px; color: #94A3B8; letter-spacing: 1px; font-weight: 600; }
+        .nav-menu { list-style: none; margin-top: 20px; flex-grow: 1; }
+        .nav-menu li { padding: 14px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: #94A3B8; font-weight: 500; font-size: 14px; transition: all 0.2s; position: relative; }
+        .nav-menu li:hover { background-color: rgba(255,255,255,0.05); color: var(--white); }
+        .nav-menu li.active { background-color: var(--bg-active); color: var(--white); border-left: 4px solid #60A5FA; }
+        .nav-menu li i { width: 20px; text-align: center; }
+        .nav-menu li .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+        .sidebar-footer { padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748B; }
+
+        /* ============ MAIN ============ */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; padding: 20px 30px; overflow-y: auto; }
+        .view { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease; }
+        .view.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header-title h2 { font-size: 22px; color: var(--text-main); font-weight: 700; }
+        .header-info { display: flex; align-items: center; gap: 20px; }
+        .date-time { text-align: right; font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+        .date-time p:first-child { text-transform: capitalize; }
+
+        .icon-btn { position: relative; width: 38px; height: 38px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s; }
+        .icon-btn:hover { transform: translateY(-2px); color: var(--bg-active); }
+        .icon-btn .badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg-card); padding: 5px 15px 5px 5px; border-radius: 30px; box-shadow: var(--shadow); cursor: pointer; border: 1px solid var(--border); }
+        .user-profile img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .user-info p:first-child { font-size: 12px; font-weight: 700; color: var(--text-main); }
+        .user-info p:last-child { font-size: 10px; color: var(--green); font-weight: 600; }
+
+        /* ============ STATS ============ */
+        .stats-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-icon { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .stat-info h3 { font-size: 22px; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 4px; }
+        .stat-info p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        .card-red .stat-icon { background: var(--red-light); color: var(--red); }
+        .card-blue .stat-icon { background: var(--blue-light); color: var(--blue); }
+        .card-orange .stat-icon { background: var(--orange-light); color: var(--orange); }
+        .card-yellow .stat-icon { background: var(--yellow-light); color: var(--yellow); }
+
+        /* ============ MAP ============ */
+        .map-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; flex-grow: 1; min-height: 400px; }
+        .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
+        .map-header h3 { font-size: 16px; color: var(--text-main); }
+        .map-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn { background: var(--bg-active); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit; }
+        .btn:hover { background: #0F3FA0; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.6; cursor: wait; }
+        .btn-danger { background: var(--red); }
+        .btn-danger:hover { background: #B91C1C; }
+        .btn-secondary { background: var(--border); color: var(--text-main); }
+        .btn-secondary:hover { background: #CBD5E1; }
+        .btn-success { background: var(--green); }
+        .btn-success:hover { background: #059669; }
+
+        #map { width: 100%; height: 100%; border-radius: 8px; flex-grow: 1; z-index: 1; min-height: 350px; }
+        
+        .map-legend { display: flex; justify-content: center; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-main); }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+        .custom-marker-wrapper { background: transparent !important; border: none !important; }
+        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position: relative; transition: transform 0.15s; }
+        .marker-patrol { background-color: var(--bg-sidebar); width: 35px; height: 25px; }
+        .marker-ambulance { background-color: var(--red); width: 35px; height: 25px; }
+        .marker-location { background-color: var(--orange); width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; font-size: 14px; }
+        .marker-emergency { background-color: var(--red); width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; font-size: 14px; animation: emergencyPulse 1.5s infinite; }
+        @keyframes emergencyPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
+            50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+        }
+        .marker-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); color: white; font-size: 10px; font-weight: 700; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8); background: rgba(0,0,0,0.5); padding: 1px 5px; border-radius: 3px; pointer-events: none; }
+
+        .units-status { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .unit-chip { background: var(--bg-body); border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
+        .unit-chip:hover { border-color: var(--bg-active); }
+        .unit-chip.active { background: var(--blue-light); border-color: var(--blue); }
+        .unit-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .unit-chip.patrol .dot { background: var(--bg-sidebar); }
+        .unit-chip.ambulance .dot { background: var(--red); }
+
+        /* ============ PANELS ============ */
+        .unidades-container { display: flex; flex-direction: column; gap: 18px; flex-grow: 1; }
+        .panel-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
+        .panel-card h3 { font-size: 16px; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .panel-card .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .input, .select {
+            padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 13px; font-family: 'Inter', sans-serif;
+            background: var(--bg-input); color: var(--text-main); outline: none; transition: all 0.2s;
+        }
+        .input:focus, .select:focus { border-color: var(--bg-active); box-shadow: 0 0 0 3px rgba(22,82,198,0.15); }
+        .input { min-width: 140px; }
+
+        /* Filters */
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .filter-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .filter-chip:hover { border-color: var(--bg-active); color: var(--bg-active); }
+        .filter-chip.active { background: var(--bg-active); color: white; border-color: var(--bg-active); }
+
+        /* Units Grid */
+        .units-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+        .unit-card {
+            background: var(--bg-body); border: 1px solid var(--border); border-radius: 10px;
+            padding: 14px; display: flex; align-items: center; gap: 12px;
+            transition: all 0.2s; cursor: pointer;
+        }
+        .unit-card:hover { border-color: var(--bg-active); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .unit-card.temporal { background: var(--yellow-light); border-color: var(--yellow); }
+        body.dark .unit-card.temporal { background: rgba(234,179,8,0.15); }
+        .unit-card .unit-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; flex-shrink: 0; }
+        .unit-card.patrol .unit-icon { background: var(--bg-sidebar); }
+        .unit-card.ambulance .unit-icon { background: var(--red); }
+        .unit-card .unit-details { flex-grow: 1; min-width: 0; }
+        .unit-card .unit-id { font-size: 14px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .unit-card .badge-temp { background: var(--orange); color: white; font-size: 9px; padding: 1px 6px; border-radius: 8px; font-weight: 700; text-transform: uppercase; }
+        .unit-card .unit-status { font-size: 11px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 5px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .status-dot.en_camino { background: var(--blue); animation: pulse 1.5s infinite; }
+        .status-dot.llegado { background: var(--green); }
+        .status-dot.buscando { background: var(--yellow); }
+        .status-dot.error { background: var(--red); }
+        .status-dot.asignado { background: var(--purple); animation: pulse 1.5s infinite; }
+
+        .unit-card .btn-delete { background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; }
+        .unit-card .btn-delete:hover { background: var(--red-light); }
+
+        /* Emergencies */
+        .emergency-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+        .emergency-card {
+            background: var(--bg-body); border: 1px solid var(--border); border-left: 4px solid var(--red);
+            border-radius: 10px; padding: 15px; transition: all 0.2s;
+        }
+        .emergency-card.pendiente { border-left-color: var(--yellow); }
+        .emergency-card.en_atencion { border-left-color: var(--blue); }
+        .emergency-card.resuelta { border-left-color: var(--green); opacity: 0.7; }
+        .emergency-card:hover { transform: translateX(3px); box-shadow: var(--shadow); }
+        .emergency-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .emergency-title { font-size: 14px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .emergency-priority { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; text-transform: uppercase; }
+        .priority-alta { background: var(--red-light); color: var(--red); }
+        .priority-media { background: var(--orange-light); color: var(--orange); }
+        .priority-baja { background: var(--green-light); color: var(--green); }
+        .emergency-meta { font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; }
+        .emergency-meta i { width: 14px; }
+        .emergency-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .emergency-actions .btn { padding: 5px 10px; font-size: 11px; }
+
+        /* Charts */
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+        .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
+        .chart-card h3 { font-size: 14px; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .chart-card canvas { max-height: 260px; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 9999;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card); border-radius: 16px; padding: 25px; width: 440px; max-width: 90vw;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal h3 { font-size: 18px; color: var(--text-main); margin-bottom: 5px; }
+        .modal .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
+        .modal-field .input, .modal-field .select { width: 100%; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        /* Side Detail Panel */
+        .detail-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 360px;
+            background: var(--bg-card); border-left: 1px solid var(--border);
+            box-shadow: var(--shadow-lg); z-index: 9998;
+            transform: translateX(100%); transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .detail-panel.active { transform: translateX(0); }
+        .detail-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .detail-header h3 { font-size: 16px; color: var(--text-main); }
+        .detail-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 5px; border-radius: 6px; }
+        .detail-close:hover { background: var(--bg-body); }
+        .detail-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .detail-row .label { color: var(--text-muted); font-weight: 500; }
+        .detail-row .value { color: var(--text-main); font-weight: 700; }
+
+        /* Toasts */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--blue);
+            border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-lg);
+            min-width: 280px; display: flex; align-items: center; gap: 12px;
+            animation: slideInRight 0.3s ease;
+        }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        .toast.success { border-left-color: var(--green); }
+        .toast.error { border-left-color: var(--red); }
+        .toast.warning { border-left-color: var(--orange); }
+        .toast i { font-size: 18px; }
+        .toast.success i { color: var(--green); }
+        .toast.error i { color: var(--red); }
+        .toast.warning i { color: var(--orange); }
+        .toast.info i { color: var(--blue); }
+        .toast-content { flex-grow: 1; }
+        .toast-title { font-size: 13px; font-weight: 700; color: var(--text-main); }
+        .toast-msg { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        .empty-state { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
+        .empty-state i { font-size: 32px; margin-bottom: 10px; opacity: 0.5; display: block; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .stats-container { grid-template-columns: repeat(2, 1fr); }
+            .sidebar { width: 70px; }
+            .logo-text, .nav-menu li span, .sidebar-footer { display: none; }
+            .nav-menu li { justify-content: center; padding: 14px; }
+            .detail-panel { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="logo-text">
+                <h1>CITYFIX</h1>
+                <p>CENTRO DE MONITOREO</p>
+            </div>
+        </div>
+        <ul class="nav-menu">
+            <li class="active" data-view="inicio"><i class="fa-solid fa-house"></i> <span>Inicio</span></li>
+            <li data-view="emergencias"><i class="fa-solid fa-bell"></i> <span>Emergencias</span><span class="nav-badge" id="navEmergenciasBadge">0</span></li>
+            <li data-view="unidades"><i class="fa-solid fa-car"></i> <span>Unidades</span></li>
+            <li data-view="reportes"><i class="fa-solid fa-chart-simple"></i> <span>Estadísticas</span></li>
+            <li data-view="configuracion"><i class="fa-solid fa-gear"></i> <span>Configuración</span></li>
+        </ul>
+        <div class="sidebar-footer">
+            <p>v2.0 · Demo</p>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-title"><h2 id="view-title">Resumen operativo</h2></div>
+            <div class="header-info">
+                <div class="date-time">
+                    <p id="fecha-actual">Cargando...</p>
+                    <p id="hora-actual">Cargando...</p>
+                </div>
+                <div class="icon-btn" id="btnTheme" title="Modo oscuro">
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+                <div class="icon-btn" id="btnNotifications" title="Notificaciones">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="badge" id="notifBadge">3</span>
+                </div>
+                <div class="user-profile">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="Avatar">
+                    <div class="user-info">
+                        <p>Operador CS</p>
+                        <p>En línea</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ============ VISTA INICIO ============ -->
+        <div class="view active" id="view-inicio">
+            <section class="stats-container">
+                <div class="stat-card card-red">
+                    <div class="stat-icon"><i class="fa-solid fa-bell"></i></div>
+                    <div class="stat-info"><h3 id="stat-emergencias">0</h3><p>Emergencias activas</p></div>
+                </div>
+                <div class="stat-card card-blue">
+                    <div class="stat-icon"><i class="fa-solid fa-car"></i></div>
+                    <div class="stat-info"><h3 id="stat-patrullas">0</h3><p>Patrullas en servicio</p></div>
+                </div>
+                <div class="stat-card card-orange">
+                    <div class="stat-icon"><i class="fa-solid fa-truck-medical"></i></div>
+                    <div class="stat-info"><h3 id="stat-ambulancias">0</h3><p>Ambulancias en servicio</p></div>
+                </div>
+                <div class="stat-card card-yellow">
+                    <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="stat-info"><h3 id="stat-tiempo">--</h3><p>Tiempo prom. respuesta</p></div>
+                </div>
+            </section>
+
+            <section class="map-section">
+                <div class="map-header">
+                    <h3><i class="fa-solid fa-map" style="color: var(--bg-active);"></i> Mapa general — Simulacro en tiempo real</h3>
+                    <div class="map-actions">
+                        <button class="btn btn-danger" id="btnNuevaEmergencia">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Nueva emergencia
+                        </button>
+                        <button class="btn btn-secondary" id="btnUbicacion">
+                            <i class="fa-solid fa-location-crosshairs"></i> Mi ubicación
+                        </button>
+                    </div>
+                </div>
+
+                <div id="map"></div>
+                
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--red);"></span> Ambulancia</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--bg-sidebar);"></span> Patrulla</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> Tú</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--red); animation: pulse 1.5s infinite;"></span> Emergencia</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--blue);"></span> Ruta activa</div>
+                </div>
+
+                <div class="units-status" id="unitsStatus"></div>
+            </section>
+        </div>
+
+        <!-- ============ VISTA EMERGENCIAS ============ -->
+        <div class="view" id="view-emergencias">
+            <div class="panel-card" style="margin-bottom: 18px;">
+                <h3><i class="fa-solid fa-plus-circle" style="color: var(--red);"></i> Registrar emergencia</h3>
+                <p class="subtitle">Crea una emergencia y el sistema asignará la unidad más cercana automáticamente.</p>
+                <div class="form-row">
+                    <select class="select" id="tipoEmergencia">
+                        <option value="robo">🚨 Robo</option>
+                        <option value="accidente">🚗 Accidente</option>
+                        <option value="incendio">🔥 Incendio</option>
+                        <option value="violencia">⚠️ Violencia</option>
+                        <option value="medica">🏥 Emergencia médica</option>
+                    </select>
+                    <select class="select" id="prioridadEmergencia">
+                        <option value="alta">🔴 Prioridad alta</option>
+                        <option value="media">🟠 Prioridad media</option>
+                        <option value="baja">🟢 Prioridad baja</option>
+                    </select>
+                    <input type="text" class="input" id="direccionEmergencia" placeholder="Dirección (opcional)" maxlength="60">
+                    <button class="btn btn-danger" id="btnCrearEmergencia">
+                        <i class="fa-solid fa-bullhorn"></i> Crear emergencia
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-card" style="flex-grow: 1;">
+                <h3><i class="fa-solid fa-list" style="color: var(--red);"></i> Emergencias registradas</h3>
+                <p class="subtitle" id="emergenciasCount">Cargando...</p>
+                <div class="filters" id="emergenciasFilters">
+                    <div class="filter-chip active" data-filter="todas">Todas</div>
+                    <div class="filter-chip" data-filter="pendiente">Pendientes</div>
+                    <div class="filter-chip" data-filter="en_atencion">En atención</div>
+                    <div class="filter-chip" data-filter="resuelta">Resueltas</div>
+                </div>
+                <div class="emergency-grid" id="emergencyGrid"></div>
+            </div>
+        </div>
+
+        <!-- ============ VISTA UNIDADES ============ -->
+        <div class="view" id="view-unidades">
+            <div class="unidades-container">
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-plus-circle" style="color: var(--bg-active);"></i> Agregar unidad temporal</h3>
+                    <p class="subtitle">Las unidades temporales se eliminan automáticamente al recargar la página.</p>
+                    <div class="form-row">
+                        <select class="select" id="tipoUnidadTemporal">
+                            <option value="patrol">🚔 Patrulla</option>
+                            <option value="ambulance">🚑 Ambulancia</option>
+                        </select>
+                        <input type="text" class="input" id="idUnidadTemporal" placeholder="ID (ej: P-04)" maxlength="8">
+                        <button class="btn" id="btnAgregarUnidad">
+                            <i class="fa-solid fa-plus"></i> Agregar
+                        </button>
+                        <button class="btn btn-secondary" id="btnLimpiarTemporales">
+                            <i class="fa-solid fa-trash"></i> Limpiar temporales
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="flex-grow: 1;">
+                    <h3><i class="fa-solid fa-list" style="color: var(--bg-active);"></i> Unidades activas</h3>
+                    <p class="subtitle" id="unidadesCount">Cargando...</p>
+                    <div class="filters" id="unidadesFilters">
+                        <div class="filter-chip active" data-filter="todas">Todas</div>
+                        <div class="filter-chip" data-filter="patrol">Patrullas</div>
+                        <div class="filter-chip" data-filter="ambulance">Ambulancias</div>
+                        <div class="filter-chip" data-filter="temporal">Temporales</div>
+                    </div>
+                    <div class="units-grid" id="unitsGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ VISTA REPORTES ============ -->
+        <div class="view" id="view-reportes">
+            <div class="stats-container" style="margin-bottom: 20px;">
+                <div class="stat-card card-red">
+                    <div class="stat-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <div class="stat-info"><h3 id="repTotal">0</h3><p>Total emergencias</p></div>
+                </div>
+                <div class="stat-card card-blue">
+                    <div class="stat-icon"><i class="fa-solid fa-check"></i></div>
+                    <div class="stat-info"><h3 id="repResueltas">0</h3><p>Resueltas</p></div>
+                </div>
+                <div class="stat-card card-orange">
+                    <div class="stat-icon"><i class="fa-solid fa-stopwatch"></i></div>
+                    <div class="stat-info"><h3 id="repTiempo">--</h3><p>Tiempo prom. (min)</p></div>
+                </div>
+                <div class="stat-card card-yellow">
+                    <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
+                    <div class="stat-info"><h3 id="repEfectividad">0%</h3><p>Efectividad</p></div>
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3><i class="fa-solid fa-chart-pie" style="color: var(--red);"></i> Emergencias por tipo</h3>
+                    <canvas id="chartTipos"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fa-solid fa-chart-bar" style="color: var(--blue);"></i> Emergencias por prioridad</h3>
+                    <canvas id="chartPrioridad"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fa-solid fa-chart-line" style="color: var(--green);"></i> Actividad por hora</h3>
+                    <canvas id="chartHoras"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fa-solid fa-chart-area" style="color: var(--purple);"></i> Estado de unidades</h3>
+                    <canvas id="chartEstados"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ VISTA CONFIGURACIÓN ============ -->
+        <div class="view" id="view-configuracion">
+            <div class="panel-card">
+                <h3><i class="fa-solid fa-sliders" style="color: var(--bg-active);"></i> Ajustes de simulación</h3>
+                <p class="subtitle">Personaliza el comportamiento del simulacro.</p>
+                <div class="detail-row">
+                    <span class="label">Velocidad de simulación</span>
+                    <input type="range" id="velocidadSim" min="1" max="5" value="1" style="width: 200px;">
+                </div>
+                <div class="detail-row">
+                    <span class="label">Auto-asignar emergencias</span>
+                    <input type="checkbox" id="autoAsignar" checked style="width: 20px; height: 20px;">
+                </div>
+                <div class="detail-row">
+                    <span class="label">Notificaciones del sistema</span>
+                    <input type="checkbox" id="notificaciones" checked style="width: 20px; height: 20px;">
+                </div>
+                <div class="detail-row">
+                    <span class="label">Modo oscuro</span>
+                    <input type="checkbox" id="darkToggle" style="width: 20px; height: 20px;">
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Detail Panel -->
+    <aside class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+            <h3 id="detailTitle">Detalles</h3>
+            <button class="detail-close" id="detailClose"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-body" id="detailBody"></div>
+    </aside>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // ==========================================
+        // TOASTS
+        // ==========================================
+        function toast(title, msg = '', type = 'info') {
+            if (!document.getElementById('notificaciones')?.checked) return;
+            const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+            const el = document.createElement('div');
+            el.className = 'toast ' + type;
+            el.innerHTML = `<i class="fa-solid ${icons[type]}"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+                </div>`;
+            document.getElementById('toastContainer').appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(50px)';
+                el.style.transition = 'all 0.3s';
+                setTimeout(() => el.remove(), 300);
+            }, 3500);
+        }
+
+        // ==========================================
+        // RELOJ
+        // ==========================================
+        function actualizarReloj() {
+            const ahora = new Date();
+            document.getElementById('fecha-actual').textContent =
+                ahora.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('hora-actual').textContent =
+                ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+        actualizarReloj();
+        setInterval(actualizarReloj, 1000);
+
+        // ==========================================
+        // MODO OSCURO
+        // ==========================================
+        const btnTheme = document.getElementById('btnTheme');
+        const darkToggle = document.getElementById('darkToggle');
+        function setTheme(dark) {
+            document.body.classList.toggle('dark', dark);
+            btnTheme.innerHTML = dark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+            if (darkToggle) darkToggle.checked = dark;
+            localStorage.setItem('cityfix-dark', dark ? '1' : '0');
+        }
+        btnTheme.addEventListener('click', () => setTheme(!document.body.classList.contains('dark')));
+        if (darkToggle) darkToggle.addEventListener('change', (e) => setTheme(e.target.checked));
+        if (localStorage.getItem('cityfix-dark') === '1') setTheme(true);
+
+        // ==========================================
+        // MAPA
+        // ==========================================
+        const map = L.map('map', { zoomControl: false }).setView([20.9754, -89.6169], 14);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0','mt1','mt2','mt3'],
+            attribution: '&copy; Google Maps'
+        }).addTo(map);
+
+        // ==========================================
+        // ICONOS
+        // ==========================================
+        function createCustomIcon(className, label, iconHtml = '', rotatable = false) {
+            return L.divIcon({
+                className: 'custom-marker-wrapper',
+                html: `<div class="custom-marker ${className}">
+                            ${iconHtml}
+                            <div class="marker-label">${label}</div>
+                       </div>`,
+                iconSize: [35, 25],
+                iconAnchor: [17, 12]
+            });
+        }
+
+        // ==========================================
+        // GEOLOCALIZACIÓN
+        // ==========================================
+        let marcadorUsuario = null;
+        let circuloUsuario = null;
+        let centroSimulacion = L.latLng(20.9754, -89.6169);
+        let ubicacionObtenida = false;
+
+        function activarGeolocalizacion(auto = false) {
+            if (ubicacionObtenida && !auto) {
+                map.flyTo(centroSimulacion, 16);
+                return;
+            }
+            const btn = document.getElementById('btnUbicacion');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+
+            const onFound = (e) => {
+                if (marcadorUsuario) map.removeLayer(marcadorUsuario);
+                if (circuloUsuario) map.removeLayer(circuloUsuario);
+
+                circuloUsuario = L.circle(e.latlng, {
+                    radius: e.accuracy / 2, color: '#3B82F6',
+                    fillColor: '#DBEAFE', fillOpacity: 0.25, weight: 1
+                }).addTo(map);
+
+                marcadorUsuario = L.marker(e.latlng, {
+                    icon: createCustomIcon('marker-location', 'Tú', '<i class="fa-solid fa-location-crosshairs"></i>')
+                }).addTo(map).bindPopup(`<b>Tu ubicación</b><br>Precisión: ±${Math.round(e.accuracy)} m`);
+
+                centroSimulacion = e.latlng;
+                ubicacionObtenida = true;
+                iniciarSimulacion(e.latlng);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación';
+                map.off('locationfound', onFound);
+            };
+
+            const onError = () => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación';
+                centroSimulacion = L.latLng(20.9754, -89.6169);
+                map.setView(centroSimulacion, 15);
+                if (marcadorUsuario) map.removeLayer(marcadorUsuario);
+                marcadorUsuario = L.marker(centroSimulacion, {
+                    icon: createCustomIcon('marker-location', 'Tú (aprox)', '<i class="fa-solid fa-location-crosshairs"></i>')
+                }).addTo(map).bindPopup('Ubicación aproximada');
+                ubicacionObtenida = true;
+                iniciarSimulacion(centroSimulacion);
+                if (!auto) toast('Ubicación no disponible', 'Usando ubicación por defecto', 'warning');
+                map.off('locationerror', onError);
+            };
+
+            map.once('locationfound', onFound);
+            map.once('locationerror', onError);
+            map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000 });
+        }
+        document.getElementById('btnUbicacion').addEventListener('click', () => activarGeolocalizacion(false));
+
+        // ==========================================
+        // UTILIDADES GEO
+        // ==========================================
+        function randomPointAround(center, minKm, maxKm) {
+            const r = (minKm + Math.random() * (maxKm - minKm)) / 111;
+            const theta = Math.random() * 2 * Math.PI;
+            return L.latLng(
+                center.lat + r * Math.cos(theta),
+                center.lng + r * Math.sin(theta) / Math.cos(center.lat * Math.PI / 180)
+            );
+        }
+
+        function decodePolyline(str, precision = 5) {
+            let index = 0, lat = 0, lng = 0, coordinates = [];
+            const factor = Math.pow(10, precision);
+            while (index < str.length) {
+                let b, shift = 0, result = 0;
+                do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+                const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+                shift = 0; result = 0;
+                do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+                const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+                coordinates.push([lat / factor, lng / factor]);
+            }
+            return coordinates;
+        }
+
+        // ==========================================
+        // RUTEO OSRM
+        // ==========================================
+        async function obtenerRuta(origen, destino) {
+            const url = `https://router.project-osrm.org/route/v1/driving/${origen.lng},${origen.lat};${destino.lng},${destino.lat}?overview=full&geometries=polyline`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!data.routes || data.routes.length === 0) return null;
+                const route = data.routes[0];
+                const coords = decodePolyline(route.geometry, 5);
+                return {
+                    coords: coords.map(c => L.latLng(c[0], c[1])),
+                    distance: route.distance,
+                    duration: route.duration
+                };
+            } catch (err) {
+                console.warn('Error OSRM:', err);
+                return null;
+            }
+        }
+
+        // ==========================================
+        // SIMULACIÓN
+        // ==========================================
+        const UNIDADES_DEFAULT = [
+            { id: 'P-01', tipo: 'patrol' },
+            { id: 'P-02', tipo: 'patrol' },
+            { id: 'P-03', tipo: 'patrol' },
+            { id: 'A-01', tipo: 'ambulance' },
+            { id: 'A-02', tipo: 'ambulance' }
+        ];
+
+        let UNIDADES_TEMPORALES = [];
+        let UNIDADES = [...UNIDADES_DEFAULT];
+        const estadoUnidades = {};
+        const emergencias = [];
+        let filtroUnidades = 'todas';
+        let filtroEmergencias = 'todas';
+        let velocidadSim = 1;
+        let autoAsignar = true;
+
+        function iniciarSimulacion(centro) {
+            Object.values(estadoUnidades).forEach(u => {
+                if (u.marker) map.removeLayer(u.marker);
+                if (u.polyline) map.removeLayer(u.polyline);
+            });
+            Object.keys(estadoUnidades).forEach(k => delete estadoUnidades[k]);
+
+            UNIDADES = [...UNIDADES_DEFAULT, ...UNIDADES_TEMPORALES];
+
+            UNIDADES.forEach((u) => {
+                const inicio = randomPointAround(centro, 0.3, 0.9);
+                const iconFA = u.tipo === 'patrol' ? 'fa-car' : 'fa-truck-medical';
+                const marker = L.marker(inicio, {
+                    icon: createCustomIcon(
+                        u.tipo === 'patrol' ? 'marker-patrol' : 'marker-ambulance',
+                        u.id, `<i class="fa-solid ${iconFA}" style="font-size:12px;"></i>`
+                    )
+                }).addTo(map);
+
+                marker.on('click', () => mostrarDetalleUnidad(u.id));
+
+                estadoUnidades[u.id] = {
+                    info: u, marker, ruta: null, indice: 0, polyline: null,
+                    estado: 'buscando',
+                    velocidad: u.tipo === 'patrol' ? 1 : 1.2,
+                    temporal: u.temporal || false,
+                    destino: null,
+                    distancia: 0,
+                    duracion: 0,
+                    emergenciaAsignada: null,
+                    tiempoLlegada: null
+                };
+            });
+
+            actualizarPanelUnidades();
+            actualizarGridUnidades();
+            UNIDADES.forEach(u => asignarNuevaRuta(u.id, centro));
+            
+            if (window._animInterval) clearInterval(window._animInterval);
+            if (window._reasignInterval) clearInterval(window._reasignInterval);
+            
+            window._animInterval = setInterval(animarUnidades, 200);
+            window._reasignInterval = setInterval(() => {
+                UNIDADES.forEach(u => {
+                    const est = estadoUnidades[u.id];
+                    if (est && est.estado === 'llegado' && !est.emergenciaAsignada) {
+                        asignarNuevaRuta(u.id, centroSimulacion);
+                    }
+                });
+            }, 15000);
+        }
+
+        async function asignarNuevaRuta(id, centro, destinoFijo = null) {
+            const est = estadoUnidades[id];
+            if (!est) return;
+            est.estado = 'buscando';
+            actualizarGridUnidades();
+
+            const origen = est.marker.getLatLng();
+            const destino = destinoFijo || randomPointAround(centro, 0.5, 1.5);
+
+            const ruta = await obtenerRuta(origen, destino);
+            if (!ruta) {
+                est.estado = 'error';
+                actualizarGridUnidades();
+                return;
+            }
+
+            if (est.polyline) map.removeLayer(est.polyline);
+            est.polyline = L.polyline(ruta.coords, {
+                color: est.info.tipo === 'patrol' ? '#1652C6' : '#EF4444',
+                weight: 3, opacity: 0.6, dashArray: '5,8'
+            }).addTo(map);
+
+            est.ruta = ruta.coords;
+            est.indice = 0;
+            est.estado = est.emergenciaAsignada ? 'asignado' : 'en_camino';
+            est.destino = destino;
+            est.distancia = ruta.distance;
+            est.duracion = ruta.duration;
+            est.tiempoLlegada = Date.now() + (ruta.duration * 1000 / velocidadSim);
+            actualizarPanelUnidades();
+            actualizarGridUnidades();
+        }
+
+        function animarUnidades() {
+            Object.values(estadoUnidades).forEach(est => {
+                if ((est.estado !== 'en_camino' && est.estado !== 'asignado') || !est.ruta) return;
+
+                const objetivo = est.ruta[est.indice + 1];
+                if (!objetivo) {
+                    const estabaAsignada = est.emergenciaAsignada;
+                    est.estado = 'llegado';
+                    if (est.polyline) { map.removeLayer(est.polyline); est.polyline = null; }
+                    
+                    if (estabaAsignada) {
+                        const emerg = emergencias.find(e => e.id === estabaAsignada);
+                        if (emerg && emerg.estado !== 'resuelta') {
+                            emerg.estado = 'en_atencion';
+                            toast('Unidad en el lugar', `${est.info.id} llegó a ${emerg.titulo}`, 'success');
+                            actualizarGridEmergencias();
+                            // Auto-resolver después de 8 segundos
+                            setTimeout(() => resolverEmergencia(emerg.id), 8000);
+                        }
+                        est.emergenciaAsignada = null;
+                    }
+                    
+                    actualizarPanelUnidades();
+                    actualizarGridUnidades();
+                    return;
+                }
+
+                const actual = est.marker.getLatLng();
+                const dLat = objetivo.lat - actual.lat;
+                const dLng = objetivo.lng - actual.lng;
+                const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+                const angulo = Math.atan2(dLng, dLat) * 180 / Math.PI;
+
+                if (dist < 0.00008) {
+                    est.indice++;
+                } else {
+                    const paso = Math.min(est.velocidad * velocidadSim * 0.00008, dist);
+                    const nuevo = L.latLng(
+                        actual.lat + (dLat / dist) * paso,
+                        actual.lng + (dLng / dist) * paso
+                    );
+                    est.marker.setLatLng(nuevo);
+                    const inner = est.marker.getElement()?.querySelector('.custom-marker');
+                    if (inner) {
+                        // Rotar solo el icono, no el label
+                        const icon = inner.querySelector('i');
+                        if (icon) icon.style.transform = `rotate(${angulo - 90}deg)`;
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // EMERGENCIAS
+        // ==========================================
+        const TIPOS_EMERGENCIA = {
+            robo: { titulo: 'Robo', icono: 'fa-mask', unidad: 'patrol' },
+            accidente: { titulo: 'Accidente', icono: 'fa-car-burst', unidad: 'ambulance' },
+            incendio: { titulo: 'Incendio', icono: 'fa-fire', unidad: 'ambulance' },
+            violencia: { titulo: 'Violencia', icono: 'fa-hand-fist', unidad: 'patrol' },
+            medica: { titulo: 'Emergencia médica', icono: 'fa-heart-pulse', unidad: 'ambulance' }
+        };
+
+        let emergenciaIdCounter = 0;
+
+        function crearEmergencia(tipo, prioridad, direccion = '', posicion = null) {
+            const pos = posicion || randomPointAround(centroSimulacion, 0.4, 1.4);
+            const id = 'E-' + String(++emergenciaIdCounter).padStart(3, '0');
+            const tipoInfo = TIPOS_EMERGENCIA[tipo];
+            
+            const emergencia = {
+                id, tipo, prioridad,
+                titulo: tipoInfo.titulo,
+                direccion: direccion || `Zona ${Math.floor(Math.random()*99+1)}`,
+                posicion: pos,
+                estado: 'pendiente',
+                unidadAsignada: null,
+                creada: new Date(),
+                resuelta: null,
+                tiempoRespuesta: null
+            };
+
+            // Marcador en mapa
+            emergencia.marker = L.marker(pos, {
+                icon: createCustomIcon('marker-emergency', id, `<i class="fa-solid ${tipoInfo.icono}"></i>`)
+            }).addTo(map).bindPopup(`
+                <b>${tipoInfo.titulo}</b><br>
+                ${emergencia.direccion}<br>
+                Prioridad: ${prioridad.toUpperCase()}
+            `);
+
+            emergencias.unshift(emergencia);
+            toast(`Nueva emergencia: ${tipoInfo.titulo}`, `${emergencia.direccion} · ${id}`, 'error');
+            actualizarTodo();
+            
+            if (autoAsignar) {
+                setTimeout(() => asignarUnidadAEmergencia(id), 500);
+            }
+            return emergencia;
+        }
+
+        function asignarUnidadAEmergencia(emergenciaId) {
+            const emerg = emergencias.find(e => e.id === emergenciaId);
+            if (!emerg || emerg.unidadAsignada) return;
+
+            const tipoRequerido = TIPOS_EMERGENCIA[emerg.tipo].unidad;
+            const candidatas = Object.values(estadoUnidades)
+                .filter(e => e.info.tipo === tipoRequerido && !e.emergenciaAsignada && e.estado !== 'error')
+                .map(e => ({
+                    est: e,
+                    dist: e.marker.getLatLng().distanceTo(emerg.posicion)
+                }))
+                .sort((a, b) => a.dist - b.dist);
+
+            if (candidatas.length === 0) {
+                toast('Sin unidades disponibles', `No hay ${tipoRequerido === 'patrol' ? 'patrullas' : 'ambulancias'} libres`, 'warning');
+                return;
+            }
+
+            const mejor = candidatas[0].est;
+            mejor.emergenciaAsignada = emerg.id;
+            emerg.unidadAsignada = mejor.info.id;
+            emerg.estado = 'en_atencion';
+
+            // Cancelar ruta actual y asignar ruta a la emergencia
+            asignarNuevaRuta(mejor.info.id, centroSimulacion, emerg.posicion);
+            
+            toast('Unidad asignada', `${mejor.info.id} → ${emerg.titulo} (${emerg.id})`, 'success');
+            actualizarTodo();
+        }
+
+        function resolverEmergencia(emergenciaId) {
+            const emerg = emergencias.find(e => e.id === emergenciaId);
+            if (!emerg || emerg.estado === 'resuelta') return;
+
+            emerg.estado = 'resuelta';
+            emerg.resuelta = new Date();
+            if (emerg.creada) {
+                emerg.tiempoRespuesta = Math.round((emerg.resuelta - emerg.creada) / 1000);
+            }
+
+            // Liberar unidad
+            if (emerg.unidadAsignada) {
+                const est = estadoUnidades[emerg.unidadAsignada];
+                if (est) {
+                    est.emergenciaAsignada = null;
+                    est.estado = 'llegado';
+                    setTimeout(() => asignarNuevaRuta(est.info.id, centroSimulacion), 2000);
+                }
+            }
+
+            if (emerg.marker) {
+                emerg.marker.setIcon(createCustomIcon('marker-emergency', emerg.id + ' ✓', '<i class="fa-solid fa-check"></i>'));
+                setTimeout(() => {
+                    if (emerg.marker) map.removeLayer(emerg.marker);
+                }, 3000);
+            }
+
+            toast('Emergencia resuelta', `${emerg.titulo} · ${emerg.id}`, 'success');
+            actualizarTodo();
+        }
+
+        // ==========================================
+        // UI: EMERGENCIAS
+        // ==========================================
+        function actualizarGridEmergencias() {
+            const grid = document.getElementById('emergencyGrid');
+            const count = document.getElementById('emergenciasCount');
+            
+            let lista = [...emergencias];
+            if (filtroEmergencias !== 'todas') {
+                lista = lista.filter(e => e.estado === filtroEmergencias);
+            }
+
+            const activas = emergencias.filter(e => e.estado !== 'resuelta').length;
+            document.getElementById('stat-emergencias').textContent = activas;
+            document.getElementById('navEmergenciasBadge').textContent = activas;
+            document.getElementById('navEmergenciasBadge').style.display = activas > 0 ? 'flex' : 'none';
+
+            count.textContent = `${lista.length} de ${emergencias.length} emergencias`;
+
+            if (lista.length === 0) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    ${emergencias.length === 0 ? 'No hay emergencias registradas' : 'Sin resultados para este filtro'}
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = lista.map(e => {
+                const tiempo = e.resuelta 
+                    ? `${e.tiempoRespuesta}s` 
+                    : `${Math.round((Date.now() - e.creada) / 1000)}s`;
+                return `
+                <div class="emergency-card ${e.estado}" data-id="${e.id}">
+                    <div class="emergency-header">
+                        <div class="emergency-title">
+                            <i class="fa-solid ${TIPOS_EMERGENCIA[e.tipo].icono}"></i>
+                            ${e.titulo} <span style="color: var(--text-muted); font-weight: 500;">${e.id}</span>
+                        </div>
+                        <span class="emergency-priority priority-${e.prioridad}">${e.prioridad}</span>
+                    </div>
+                    <div class="emergency-meta">
+                        <div><i class="fa-solid fa-location-dot"></i> ${e.direccion}</div>
+                        <div><i class="fa-solid fa-car"></i> ${e.unidadAsignada || 'Sin asignar'}</div>
+                        <div><i class="fa-solid fa-clock"></i> ${tiempo} · ${e.estado.replace('_', ' ')}</div>
+                    </div>
+                    <div class="emergency-actions">
+                        ${e.estado !== 'resuelta' && !e.unidadAsignada ? 
+                            `<button class="btn" onclick="asignarUnidadAEmergencia('${e.id}')"><i class="fa-solid fa-bolt"></i> Asignar</button>` : ''}
+                        ${e.estado !== 'resuelta' ? 
+                            `<button class="btn btn-success" onclick="resolverEmergencia('${e.id}')"><i class="fa-solid fa-check"></i> Resolver</button>` : ''}
+                        <button class="btn btn-secondary" onclick="map.flyTo([${e.posicion.lat}, ${e.posicion.lng}], 17)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ==========================================
+        // UI: PANEL MAPA
+        // ==========================================
+        function actualizarPanelUnidades() {
+            const cont = document.getElementById('unitsStatus');
+            cont.innerHTML = '';
+            Object.values(estadoUnidades).forEach(est => {
+                const chip = document.createElement('div');
+                chip.className = 'unit-chip ' + (est.info.tipo === 'patrol' ? 'patrol' : 'ambulance');
+                let estadoTxt = 'En camino';
+                if (est.estado === 'llegado') estadoTxt = 'En el lugar';
+                else if (est.estado === 'buscando') estadoTxt = 'Asignando...';
+                else if (est.estado === 'error') estadoTxt = 'Sin ruta';
+                else if (est.estado === 'asignado') estadoTxt = '🚨 Emergencia';
+                chip.innerHTML = `<span class="dot"></span> ${est.info.id} · ${estadoTxt}`;
+                chip.addEventListener('click', () => mostrarDetalleUnidad(est.info.id));
+                cont.appendChild(chip);
+            });
+
+            const patrullas = Object.values(estadoUnidades).filter(e => e.info.tipo === 'patrol').length;
+            const ambulancias = Object.values(estadoUnidades).filter(e => e.info.tipo === 'ambulance').length;
+            document.getElementById('stat-patrullas').textContent = patrullas;
+            document.getElementById('stat-ambulancias').textContent = ambulancias;
+
+            // Tiempo promedio de respuesta
+            const resueltas = emergencias.filter(e => e.tiempoRespuesta);
+            if (resueltas.length > 0) {
+                const prom = Math.round(resueltas.reduce((s, e) => s + e.tiempoRespuesta, 0) / resueltas.length);
+                document.getElementById('stat-tiempo').textContent = prom + 's';
+            }
+        }
+
+        // ==========================================
+        // UI: GRID UNIDADES
+        // ==========================================
+        function actualizarGridUnidades() {
+            const grid = document.getElementById('unitsGrid');
+            const count = document.getElementById('unidadesCount');
+            
+            let unidades = Object.values(estadoUnidades);
+            if (filtroUnidades === 'patrol') unidades = unidades.filter(u => u.info.tipo === 'patrol');
+            else if (filtroUnidades === 'ambulance') unidades = unidades.filter(u => u.info.tipo === 'ambulance');
+            else if (filtroUnidades === 'temporal') unidades = unidades.filter(u => u.temporal);
+
+            if (unidades.length === 0) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+                    <i class="fa-solid fa-car"></i>
+                    No hay unidades que coincidan
+                </div>`;
+                count.textContent = 'Sin unidades';
+                return;
+            }
+
+            const total = Object.keys(estadoUnidades).length;
+            const temporales = Object.values(estadoUnidades).filter(u => u.temporal).length;
+            count.textContent = `${total} unidades activas${temporales > 0 ? ` · ${temporales} temporal${temporales > 1 ? 'es' : ''}` : ''}`;
+
+            grid.innerHTML = '';
+            unidades.forEach(est => {
+                const card = document.createElement('div');
+                card.className = 'unit-card ' + est.info.tipo;
+                if (est.temporal) card.classList.add('temporal');
+
+                let estadoTxt = 'En camino', estadoClass = 'en_camino';
+                if (est.estado === 'llegado') { estadoTxt = 'En el lugar'; estadoClass = 'llegado'; }
+                else if (est.estado === 'buscando') { estadoTxt = 'Asignando'; estadoClass = 'buscando'; }
+                else if (est.estado === 'error') { estadoTxt = 'Sin ruta'; estadoClass = 'error'; }
+                else if (est.estado === 'asignado') { estadoTxt = 'Atendiendo emergencia'; estadoClass = 'asignado'; }
+
+                const iconFA = est.info.tipo === 'patrol' ? 'fa-car' : 'fa-truck-medical';
+                const tipoLabel = est.info.tipo === 'patrol' ? 'Patrulla' : 'Ambulancia';
+
+                card.innerHTML = `
+                    <div class="unit-icon"><i class="fa-solid ${iconFA}"></i></div>
+                    <div class="unit-details">
+                        <div class="unit-id">
+                            ${est.info.id}
+                            ${est.temporal ? '<span class="badge-temp">temp</span>' : ''}
+                        </div>
+                        <div class="unit-status">
+                            <span class="status-dot ${estadoClass}"></span>
+                            ${tipoLabel} · ${estadoTxt}
+                        </div>
+                    </div>
+                    ${est.temporal ? `<button class="btn-delete" data-id="${est.info.id}"><i class="fa-solid fa-trash"></i></button>` : ''}
+                `;
+
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-delete')) return;
+                    mostrarDetalleUnidad(est.info.id);
+                });
+
+                grid.appendChild(card);
+            });
+
+            grid.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    eliminarUnidadTemporal(btn.dataset.id);
+                });
+            });
+        }
+
+        // ==========================================
+        // GESTIÓN UNIDADES TEMPORALES
+        // ==========================================
+        function agregarUnidadTemporal(tipo, id) {
+            if (!id || id.trim() === '') {
+                id = (tipo === 'patrol' ? 'P-T' : 'A-T') + Math.floor(Math.random() * 90 + 10);
+            }
+            id = id.trim().toUpperCase();
+
+            if (UNIDADES.some(u => u.id === id)) {
+                toast('ID duplicado', `Ya existe una unidad con ID "${id}"`, 'error');
+                return false;
+            }
+
+            const nuevaUnidad = { id, tipo, temporal: true };
+            UNIDADES_TEMPORALES.push(nuevaUnidad);
+            UNIDADES.push(nuevaUnidad);
+
+            const inicio = randomPointAround(centroSimulacion, 0.3, 0.9);
+            const iconFA = tipo === 'patrol' ? 'fa-car' : 'fa-truck-medical';
+            const marker = L.marker(inicio, {
+                icon: createCustomIcon(tipo === 'patrol' ? 'marker-patrol' : 'marker-ambulance', id, `<i class="fa-solid ${iconFA}" style="font-size:12px;"></i>`)
+            }).addTo(map);
+            marker.on('click', () => mostrarDetalleUnidad(id));
+
+            estadoUnidades[id] = {
+                info: nuevaUnidad, marker, ruta: null, indice: 0, polyline: null,
+                estado: 'buscando',
+                velocidad: tipo === 'patrol' ? 1 : 1.2,
+                temporal: true, destino: null, distancia: 0, duracion: 0,
+                emergenciaAsignada: null, tiempoLlegada: null
+            };
+
+            asignarNuevaRuta(id, centroSimulacion);
+            actualizarPanelUnidades();
+            actualizarGridUnidades();
+            toast('Unidad agregada', `${id} (${tipo === 'patrol' ? 'Patrulla' : 'Ambulancia'})`, 'success');
+            return true;
+        }
+
+        function eliminarUnidadTemporal(id) {
+            const est = estadoUnidades[id];
+            if (est) {
+                if (est.marker) map.removeLayer(est.marker);
+                if (est.polyline) map.removeLayer(est.polyline);
+                delete estadoUnidades[id];
+            }
+            UNIDADES_TEMPORALES = UNIDADES_TEMPORALES.filter(u => u.id !== id);
+            UNIDADES = UNIDADES.filter(u => u.id !== id);
+            actualizarPanelUnidades();
+            actualizarGridUnidades();
+            toast('Unidad eliminada', id, 'info');
+        }
+
+        function limpiarUnidadesTemporales() {
+            if (UNIDADES_TEMPORALES.length === 0) {
+                toast('Nada que limpiar', 'No hay unidades temporales', 'info');
+                return;
+            }
+            const ids = UNIDADES_TEMPORALES.map(u => u.id);
+            ids.forEach(id => eliminarUnidadTemporal(id));
+            toast('Temporales eliminadas', `${ids.length} unidades removidas`, 'success');
+        }
+
+        // ==========================================
+        // PANEL DETALLE
+        // ==========================================
+        function mostrarDetalleUnidad(id) {
+            const est = estadoUnidades[id];
+            if (!est) return;
+
+            const panel = document.getElementById('detailPanel');
+            document.getElementById('detailTitle').innerHTML = `<i class="fa-solid fa-${est.info.tipo === 'patrol' ? 'car' : 'truck-medical'}"></i> ${est.info.id}`;
+            
+            const estadoTxt = { en_camino: 'En camino', llegado: 'En el lugar', buscando: 'Asignando', error: 'Sin ruta', asignado: 'Atendiendo emergencia' }[est.estado] || est.estado;
+            const velocidadKmh = est.estado === 'en_camino' || est.estado === 'asignado' ? Math.round((est.info.tipo === 'patrol' ? 60 : 72) * velocidadSim) : 0;
+            const eta = est.tiempoLlegada ? Math.max(0, Math.round((est.tiempoLlegada - Date.now()) / 1000)) : '--';
+
+            document.getElementById('detailBody').innerHTML = `
+                <div class="detail-row"><span class="label">Tipo</span><span class="value">${est.info.tipo === 'patrol' ? 'Patrulla' : 'Ambulancia'}</span></div>
+                <div class="detail-row"><span class="label">Estado</span><span class="value">${estadoTxt}</span></div>
+                <div class="detail-row"><span class="label">Velocidad</span><span class="value">${velocidadKmh} km/h</span></div>
+                <div class="detail-row"><span class="label">Distancia restante</span><span class="value">${est.distancia ? (est.distancia / 1000).toFixed(2) + ' km' : '--'}</span></div>
+                <div class="detail-row"><span class="label">ETA</span><span class="value">${eta}s</span></div>
+                <div class="detail-row"><span class="label">Emergencia activa</span><span class="value">${est.emergenciaAsignada || 'Ninguna'}</span></div>
+                <div class="detail-row"><span class="label">Temporal</span><span class="value">${est.temporal ? 'Sí' : 'No'}</span></div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn" style="flex:1;" onclick="map.flyTo(estadoUnidades['${id}'].marker.getLatLng(), 17);"><i class="fa-solid fa-eye"></i> Ver en mapa</button>
+                    <button class="btn btn-secondary" style="flex:1;" onclick="asignarNuevaRuta('${id}', centroSimulacion); ocultarDetalle();"><i class="fa-solid fa-rotate"></i> Nueva ruta</button>
+                </div>
+            `;
+            panel.classList.add('active');
+        }
+
+        function ocultarDetalle() {
+            document.getElementById('detailPanel').classList.remove('active');
+        }
+        document.getElementById('detailClose').addEventListener('click', ocultarDetalle);
+
+        // ==========================================
+        // ACTUALIZACIÓN GLOBAL
+        // ==========================================
+        function actualizarTodo() {
+            actualizarPanelUnidades();
+            actualizarGridUnidades();
+            actualizarGridEmergencias();
+            actualizarStatsReportes();
+            if (typeof actualizarCharts === 'function') actualizarCharts();
+        }
+
+        // ==========================================
+        // NAVEGACIÓN
+        // ==========================================
+        const viewTitles = {
+            inicio: 'Resumen operativo',
+            emergencias: 'Gestión de Emergencias',
+            unidades: 'Gestión de Unidades',
+            reportes: 'Estadísticas y Reportes',
+            configuracion: 'Configuración'
+        };
+
+        document.querySelectorAll('.nav-menu li').forEach(li => {
+            li.addEventListener('click', () => {
+                document.querySelectorAll('.nav-menu li').forEach(x => x.classList.remove('active'));
+                li.classList.add('active');
+                const view = li.dataset.view;
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-' + view)?.classList.add('active');
+                document.getElementById('view-title').textContent = viewTitles[view] || 'CityFix';
+                if (view === 'inicio' && map) setTimeout(() => map.invalidateSize(), 100);
+                if (view === 'reportes') setTimeout(() => { actualizarStatsReportes(); actualizarCharts(); }, 100);
+            });
+        });
+
+        // ==========================================
+        // FILTROS
+        // ==========================================
+        document.querySelectorAll('#unidadesFilters .filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('#unidadesFilters .filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                filtroUnidades = chip.dataset.filter;
+                actualizarGridUnidades();
+            });
+        });
+
+        document.querySelectorAll('#emergenciasFilters .filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('#emergenciasFilters .filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                filtroEmergencias = chip.dataset.filter;
+                actualizarGridEmergencias();
+            });
+        });
+
+        // ==========================================
+        // EVENT LISTENERS
+        // ==========================================
+        document.getElementById('btnAgregarUnidad').addEventListener('click', () => {
+            const tipo = document.getElementById('tipoUnidadTemporal').value;
+            const inputId = document.getElementById('idUnidadTemporal');
+            if (agregarUnidadTemporal(tipo, inputId.value)) {
+                inputId.value = '';
+                inputId.focus();
+            }
+        });
+
+        document.getElementById('idUnidadTemporal').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('btnAgregarUnidad').click();
+        });
+
+        document.getElementById('btnLimpiarTemporales').addEventListener('click', limpiarUnidadesTemporales);
+
+        document.getElementById('btnCrearEmergencia').addEventListener('click', () => {
+            const tipo = document.getElementById('tipoEmergencia').value;
+            const prioridad = document.getElementById('prioridadEmergencia').value;
+            const direccion = document.getElementById('direccionEmergencia').value;
+            crearEmergencia(tipo, prioridad, direccion);
+            document.getElementById('direccionEmergencia').value = '';
+        });
+
+        document.getElementById('btnNuevaEmergencia').addEventListener('click', () => {
+            const tipos = Object.keys(TIPOS_EMERGENCIA);
+            const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+            const prioridades = ['alta', 'media', 'baja'];
+            const prioridad = prioridades[Math.floor(Math.random() * 3)];
+            crearEmergencia(tipo, prioridad);
+        });
+
+        document.getElementById('btnNotifications').addEventListener('click', () => {
+            document.getElementById('notifBadge').textContent = '0';
+            toast('Notificaciones', 'Todas las notificaciones marcadas como leídas', 'info');
+        });
+
+        // Configuración
+        document.getElementById('velocidadSim').addEventListener('input', (e) => {
+            velocidadSim = parseInt(e.target.value);
+        });
+        document.getElementById('autoAsignar').addEventListener('change', (e) => {
+            autoAsignar = e.target.checked;
+        });
+
+        // ==========================================
+        // CHARTS
+        // ==========================================
+        let charts = {};
+
+        function actualizarStatsReportes() {
+            const total = emergencias.length;
+            const resueltas = emergencias.filter(e => e.estado === 'resuelta').length;
+            const conTiempo = emergencias.filter(e => e.tiempoRespuesta);
+            const prom = conTiempo.length > 0 ? Math.round(conTiempo.reduce((s, e) => s + e.tiempoRespuesta, 0) / conTiempo.length) : 0;
+            const efectividad = total > 0 ? Math.round((resueltas / total) * 100) : 0;
+
+            document.getElementById('repTotal').textContent = total;
+            document.getElementById('repResueltas').textContent = resueltas;
+            document.getElementById('repTiempo').textContent = prom || '--';
+            document.getElementById('repEfectividad').textContent = efectividad + '%';
+        }
+
+        function actualizarCharts() {
+            const textColor = document.body.classList.contains('dark') ? '#F1F5F9' : '#1E293B';
+            const gridColor = document.body.classList.contains('dark') ? '#334155' : '#E2E8F0';
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
+
+            // Tipos
+            const tiposCount = {};
+            Object.keys(TIPOS_EMERGENCIA).forEach(k => tiposCount[k] = 0);
+            emergencias.forEach(e => tiposCount[e.tipo]++);
+            
+            if (charts.tipos) charts.tipos.destroy();
+            const ctx1 = document.getElementById('chartTipos').getContext('2d');
+            charts.tipos = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(tiposCount).map(k => TIPOS_EMERGENCIA[k].titulo),
+                    datasets: [{
+                        data: Object.values(tiposCount),
+                        backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#8B5CF6', '#3B82F6'],
+                        borderWidth: 2,
+                        borderColor: document.body.classList.contains('dark') ? '#1E293B' : '#FFF'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Prioridad
+            const prioCount = { alta: 0, media: 0, baja: 0 };
+            emergencias.forEach(e => prioCount[e.prioridad]++);
+            
+            if (charts.prioridad) charts.prioridad.destroy();
+            charts.prioridad = new Chart(document.getElementById('chartPrioridad'), {
+                type: 'bar',
+                data: {
+                    labels: ['Alta', 'Media', 'Baja'],
+                    datasets: [{
+                        label: 'Emergencias',
+                        data: [prioCount.alta, prioCount.media, prioCount.baja],
+                        backgroundColor: ['#EF4444', '#F97316', '#10B981'],
+                        borderRadius: 8
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            // Horas
+            const horasCount = new Array(24).fill(0);
+            emergencias.forEach(e => { if (e.creada) horasCount[e.creada.getHours()]++; });
+            
+            if (charts.horas) charts.horas.destroy();
+            charts.horas = new Chart(document.getElementById('chartHoras'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({ length: 24 }, (_, i) => i + 'h'),
+                    datasets: [{
+                        label: 'Emergencias',
+                        data: horasCount,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16,185,129,0.15)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            // Estados de unidades
+            const estados = { 'En camino': 0, 'En el lugar': 0, 'Asignando': 0, 'Atendiendo': 0, 'Sin ruta': 0 };
+            Object.values(estadoUnidades).forEach(u => {
+                if (u.estado === 'en_camino') estados['En camino']++;
+                else if (u.estado === 'llegado') estados['En el lugar']++;
+                else if (u.estado === 'buscando') estados['Asignando']++;
+                else if (u.estado === 'asignado') estados['Atendiendo']++;
+                else if (u.estado === 'error') estados['Sin ruta']++;
+            });
+
+            if (charts.estados) charts.estados.destroy();
+            charts.estados = new Chart(document.getElementById('chartEstados'), {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(estados),
+                    datasets: [{
+                        data: Object.values(estados),
+                        backgroundColor: ['#3B82F6', '#10B981', '#EAB308', '#8B5CF6', '#EF4444'],
+                        borderWidth: 2,
+                        borderColor: document.body.classList.contains('dark') ? '#1E293B' : '#FFF'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        // ==========================================
+        // AUTO-INICIO
+        // ==========================================
+        window.addEventListener('load', () => {
+            setTimeout(() => activarGeolocalizacion(true), 600);
+            setTimeout(() => map.invalidateSize(), 1200);
+
+            // Generar algunas emergencias de demo
+            setTimeout(() => {
+                crearEmergencia('robo', 'alta', 'Av. Reforma 234');
+                setTimeout(() => crearEmergencia('accidente', 'media', 'Calle 60 #45'), 3000);
+                setTimeout(() => crearEmergencia('medica', 'alta', 'Col. Centro'), 7000);
+            }, 3000);
+
+            // Refrescar UI cada 3 segundos
+            setInterval(() => {
+                actualizarGridEmergencias();
+                actualizarStatsReportes();
+                const activas = emergencias.filter(e => e.estado !== 'resuelta').length;
+                if (activas > 0) document.getElementById('notifBadge').textContent = activas;
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detector de Movimiento</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: min(900px, 95%);
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .camera-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 15px;
+      background: black;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      height: auto;
+      transform: scaleX(-1);
+    }
+
+    .status {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      padding: 10px 15px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.7);
+      font-weight: bold;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 7px;
+    }
+
+    .dot.moving {
+      background: #ef4444;
+      animation: pulse .6s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: .3;
+      }
+    }
+
+    .panel {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .card {
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .normal {
+      color: #22c55e;
+    }
+
+    .medium {
+      color: #facc15;
+    }
+
+    .high {
+      color: #ef4444;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #475569;
+      cursor: not-allowed;
+    }
+
+    .warning {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #3f1d1d;
+      color: #fca5a5;
+      display: none;
+      text-align: center;
+    }
+
+    @media (max-width: 650px) {
+      .panel {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <h1>📷 Detector de Movimiento</h1>
+
+    <div class="camera-container">
+
+      <video id="video" autoplay playsinline></video>
+
+      <div class="status">
+        <span id="dot" class="dot"></span>
+        <span id="statusText">Cámara apagada</span>
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <div class="card">
+        <div>Movimiento</div>
+        <div id="movement" class="value normal">0%</div>
+      </div>
+
+      <div class="card">
+        <div>Intensidad</div>
+        <div id="intensity" class="value normal">Ninguna</div>
+      </div>
+
+      <div class="card">
+        <div>Estado</div>
+        <div id="state" class="value normal">Normal</div>
+      </div>
+
+    </div>
+
+    <div id="warning" class="warning">
+      ⚠️ Movimiento intenso detectado
+    </div>
+
+    <button id="startButton">
+      Activar cámara
+    </button>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+  </main>
+
+  <script>
+
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d", {
+      willReadFrequently: true
+    });
+
+    const startButton = document.getElementById("startButton");
+
+    const movementElement = document.getElementById("movement");
+    const intensityElement = document.getElementById("intensity");
+    const stateElement = document.getElementById("state");
+
+    const statusText = document.getElementById("statusText");
+    const dot = document.getElementById("dot");
+    const warning = document.getElementById("warning");
+
+    let previousFrame = null;
+    let running = false;
+
+    /*
+     * Resolución utilizada para analizar la imagen.
+     * No necesitamos analizar los 1920x1080 completos.
+     */
+    const WIDTH = 160;
+    const HEIGHT = 120;
+
+    startButton.addEventListener("click", startCamera);
+
+    async function startCamera() {
+
+      try {
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user"
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+
+        await video.play();
+
+        running = true;
+
+        statusText.textContent = "Cámara activa";
+        dot.classList.remove("moving");
+
+        startButton.textContent = "Cámara activa";
+        startButton.disabled = true;
+
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+
+        /*
+         * Esperamos a que haya imagen antes de empezar.
+         */
+        setTimeout(() => {
+          detectMovement();
+        }, 500);
+
+      } catch (error) {
+
+        console.error(error);
+
+        statusText.textContent = "Error al acceder a la cámara";
+
+        alert(
+          "No se pudo acceder a la cámara.\n\n" +
+          "Comprueba que hayas permitido el acceso a la cámara " +
+          "y que la página se esté ejecutando en HTTPS o localhost."
+        );
+
+      }
+    }
+
+
+    function detectMovement() {
+
+      if (!running) return;
+
+      /*
+       * Dibujamos el frame actual en un canvas pequeño.
+       */
+      ctx.drawImage(
+        video,
+        0,
+        0,
+        WIDTH,
+        HEIGHT
+      );
+
+      const currentFrame = ctx.getImageData(
+        0,
+        0,
+        WIDTH,
+        HEIGHT
+      );
+
+      /*
+       * Si todavía no tenemos frame anterior,
+       * guardamos el actual.
+       */
+      if (!previousFrame) {
+
+        previousFrame = currentFrame;
+
+        requestAnimationFrame(detectMovement);
+
+        return;
+      }
+
+
+      let difference = 0;
+
+      /*
+       * Analizamos los píxeles.
+       */
+      for (
+        let i = 0;
+        i < currentFrame.data.length;
+        i += 4
+      ) {
+
+        const r1 = currentFrame.data[i];
+        const g1 = currentFrame.data[i + 1];
+        const b1 = currentFrame.data[i + 2];
+
+        const r2 = previousFrame.data[i];
+        const g2 = previousFrame.data[i + 1];
+        const b2 = previousFrame.data[i + 2];
+
+        const diff =
+          Math.abs(r1 - r2) +
+          Math.abs(g1 - g2) +
+          Math.abs(b1 - b2);
+
+        /*
+         * Ignoramos pequeñas variaciones
+         * producidas por ruido de la cámara.
+         */
+        if (diff > 45) {
+          difference++;
+        }
+      }
+
+
+      const totalPixels =
+        WIDTH * HEIGHT;
+
+      /*
+       * Porcentaje de píxeles que cambiaron.
+       */
+      let percentage =
+        (difference / totalPixels) * 100;
+
+      /*
+       * Limitamos entre 0 y 100.
+       */
+      percentage =
+        Math.min(100, percentage);
+
+      /*
+       * Suavizamos un poco el resultado.
+       */
+      percentage =
+        Math.round(percentage);
+
+
+      updateInterface(percentage);
+
+      previousFrame = currentFrame;
+
+      requestAnimationFrame(detectMovement);
+    }
+
+
+    function updateInterface(value) {
+
+      movementElement.textContent =
+        value + "%";
+
+
+      /*
+       * Clasificación sencilla del movimiento.
+       *
+       * IMPORTANTE:
+       * Esto NO significa "agresividad".
+       * Solamente mide cuánto cambió la imagen.
+       */
+
+      if (value < 3) {
+
+        intensityElement.textContent =
+          "Ninguna";
+
+        intensityElement.className =
+          "value normal";
+
+        stateElement.textContent =
+          "Normal";
+
+        stateElement.className =
+          "value normal";
+
+        dot.classList.remove("moving");
+
+        warning.style.display =
+          "none";
+
+      }
+
+      else if (value < 12) {
+
+        intensityElement.textContent =
+          "Baja";
+
+        intensityElement.className =
+          "value normal";
+
+        stateElement.textContent =
+          "Actividad";
+
+        stateElement.className =
+          "value normal";
+
+        dot.classList.add("moving");
+
+        warning.style.display =
+          "none";
+
+      }
+
+      else if (value < 25) {
+
+        intensityElement.textContent =
+          "Media";
+
+        intensityElement.className =
+          "value medium";
+
+        stateElement.textContent =
+          "Movimiento alto";
+
+        stateElement.className =
+          "value medium";
+
+        dot.classList.add("moving");
+
+        warning.style.display =
+          "block";
+
+      }
+
+      else {
+
+        intensityElement.textContent =
+          "Alta";
+
+        intensityElement.className =
+          "value high";
+
+        stateElement.textContent =
+          "Movimiento intenso";
+
+        stateElement.className =
+          "value high";
+
+        dot.classList.add("moving");
+
+        warning.style.display =
+          "block";
+      }
+    }
+
+  </script>
+
+</body>
+</html>

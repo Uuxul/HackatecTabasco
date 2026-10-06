@@ -1,42 +1,12 @@
 <?php
+$host = 'sql309.infinityfree.com'; // el host que te da el panel
+$db   = 'if0_43106266_db_uxul';    // nombre completo real
+$user = 'if0_43106266';
+$pass = '';
 
-$host = "nombre base de datos";
-$db   = "cityfix";
-$user = "root";
-$pass = "";
+$conn = new mysqli($host, $user, $pass, $db);
 
-try {
-
-    $pdo = new PDO(
-
-        "mysql:host=$host;dbname=$db;charset=utf8mb4",
-
-        $user,
-
-        $pass,
-
-        [
-            PDO::ATTR_ERRMODE =>
-                PDO::ERRMODE_EXCEPTION,
-
-            PDO::ATTR_DEFAULT_FETCH_MODE =>
-                PDO::FETCH_ASSOC
-        ]
-
-    );
-
+if ($conn->connect_error) {
+    die("Error: " . $conn->connect_error);
 }
-catch (PDOException $e) {
-
-    http_response_code(500);
-
-    header("Content-Type: application/json");
-
-    echo json_encode([
-        "ok" => false,
-        "mensaje" => "Error de conexión"
-    ]);
-
-    exit;
-
-}
+?>
