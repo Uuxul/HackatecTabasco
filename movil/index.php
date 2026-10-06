@@ -303,7 +303,7 @@
     ====================================== -->
 
     <?php
-        include __DIR__ . '/include/navbar.php';
+        include __DIR__ . '/includes/navbar.php';
     ?>
 
 
@@ -316,7 +316,7 @@
 ========================================= -->
 
 <?php
-    include __DIR__ . '/include/sidebar.php';
+    include __DIR__ . '/includes/sidebar.php';
 ?>
 
 
@@ -326,7 +326,7 @@
 ========================================= -->
 
 <?php
-    include __DIR__ . '/include/modal.php';
+    include __DIR__ . '/includes/modal.php';
 ?>
 
 
