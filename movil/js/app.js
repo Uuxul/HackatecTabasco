@@ -5,13 +5,7 @@
    CONFIGURACIÓN
 ========================================================== */
 
-const NUMERO_EMERGENCIAS = "99971557245";
-
-const API_CREAR_EMERGENCIA =
-    "../api/emergencias/crear.php";
-
-const API_ACTUALIZAR_EMERGENCIA =
-    "../api/emergencias/actualizar.php";
+const NUMERO_EMERGENCIAS = "9971557245";
 
 
 /* ==========================================================
@@ -34,7 +28,87 @@ let primeraUbicacion = true;
 
 let watchId = null;
 
-let actualizandoUbicacion = false;
+
+
+/* ==========================================================
+   CARGAR INCLUDE
+========================================================== */
+
+async function cargarInclude(
+    contenedor,
+    archivo
+) {
+
+    try {
+
+        const respuesta =
+            await fetch(archivo);
+
+
+        if (!respuesta.ok) {
+
+            throw new Error(
+                `No se pudo cargar ${archivo}`
+            );
+
+        }
+
+
+        const html =
+            await respuesta.text();
+
+
+        document.getElementById(
+            contenedor
+        ).innerHTML = html;
+
+
+        return true;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        return false;
+
+    }
+
+}
+
+
+
+/* ==========================================================
+   CARGAR COMPONENTES
+========================================================== */
+
+async function cargarComponentes() {
+
+    await Promise.all([
+
+        cargarInclude(
+            "sidebar-container",
+            "include/sidebar.html"
+        ),
+
+        cargarInclude(
+            "navbar-container",
+            "include/navbar.html"
+        ),
+
+        cargarInclude(
+            "modal-container",
+            "include/modal.html"
+        )
+
+    ]);
+
+}
+
 
 
 /* ==========================================================
@@ -43,35 +117,26 @@ let actualizandoUbicacion = false;
 
 function iniciarMapa() {
 
-    const mapElement =
-        document.getElementById("map");
-
-
-    if (!mapElement) {
-
-        console.error(
-            "No se encontró el elemento #map"
-        );
-
-        return;
-
-    }
-
-
     map = L.map(
         "map",
         {
-            zoomControl: false,
-            attributionControl: false
+
+            zoomControl:
+                false,
+
+            attributionControl:
+                false
+
         }
     );
 
 
     /*
-        POSICIÓN TEMPORAL.
+        Esta posición solamente aparece
+        mientras obtenemos el GPS.
 
-        Se reemplaza cuando el GPS
-        obtiene la posición real.
+        Después el mapa se mueve automáticamente
+        a la ubicación REAL del teléfono.
     */
 
     map.setView(
@@ -84,7 +149,7 @@ function iniciarMapa() {
 
 
     /*
-        MAPA BASE
+        MISMO MAPA DEL DASHBOARD
     */
 
     L.tileLayer(
@@ -93,25 +158,24 @@ function iniciarMapa() {
 
         {
 
-            maxZoom: 20,
+            maxZoom:
+                20,
 
             subdomains: [
+
                 "mt0",
                 "mt1",
                 "mt2",
                 "mt3"
+
             ]
 
         }
 
     ).addTo(map);
 
-
-    console.log(
-        "Mapa inicializado correctamente."
-    );
-
 }
+
 
 
 /* ==========================================================
@@ -122,7 +186,9 @@ function crearIconoUsuario() {
 
     return L.divIcon({
 
-        className: "",
+        className:
+            "",
+
 
         html: `
 
@@ -140,10 +206,12 @@ function crearIconoUsuario() {
 
         `,
 
+
         iconSize: [
             44,
             44
         ],
+
 
         iconAnchor: [
             22,
@@ -155,23 +223,20 @@ function crearIconoUsuario() {
 }
 
 
+
 /* ==========================================================
    GPS AUTOMÁTICO
 ========================================================== */
 
 function iniciarGPS() {
 
-    if (!navigator.geolocation) {
+    if (
+        !navigator.geolocation
+    ) {
 
         actualizarTextoGPS(
             "GPS no disponible"
         );
-
-
-        console.error(
-            "Geolocation no está disponible."
-        );
-
 
         return;
 
@@ -205,19 +270,17 @@ function iniciarGPS() {
 
         );
 
-
-    console.log(
-        "Seguimiento GPS iniciado."
-    );
-
 }
+
 
 
 /* ==========================================================
    POSICIÓN RECIBIDA
 ========================================================== */
 
-function posicionRecibida(position) {
+function posicionRecibida(
+    position
+) {
 
     ubicacionActual = {
 
@@ -242,26 +305,12 @@ function posicionRecibida(position) {
     };
 
 
-    console.log(
-        "📍 GPS recibido:",
-        ubicacionActual
-    );
-
-
-    /*
-        ACTUALIZAMOS EL MAPA
-        DEL CIUDADANO.
-    */
-
     actualizarMapaUsuario();
 
 
     /*
-        SI YA EXISTE UNA EMERGENCIA,
-        ACTUALIZAMOS LA POSICIÓN
-        EN MYSQL.
-
-        NO CREAMOS OTRA EMERGENCIA.
+        Si ya existe una emergencia,
+        continuamos mandando la posición.
     */
 
     if (
@@ -276,8 +325,9 @@ function posicionRecibida(position) {
 }
 
 
+
 /* ==========================================================
-   ACTUALIZAR MAPA USUARIO
+   ACTUALIZAR MAPA
 ========================================================== */
 
 function actualizarMapaUsuario() {
@@ -301,10 +351,6 @@ function actualizarMapaUsuario() {
     ];
 
 
-    /*
-        TEXTO GPS
-    */
-
     actualizarTextoGPS(
 
         `GPS activo · ±${Math.round(
@@ -315,8 +361,7 @@ function actualizarMapaUsuario() {
 
 
     /*
-        ACTUALIZAR INFORMACIÓN
-        DEL MODAL.
+        ACTUALIZAR INFORMACIÓN DEL MODAL
     */
 
     const gpsPreview =
@@ -325,11 +370,11 @@ function actualizarMapaUsuario() {
         );
 
 
-    if (gpsPreview) {
+    if (
+        gpsPreview
+    ) {
 
         gpsPreview.innerHTML = `
-
-            <i class="fa-solid fa-location-dot"></i>
 
             <strong>
                 Ubicación encontrada
@@ -357,11 +402,14 @@ function actualizarMapaUsuario() {
     }
 
 
+
     /*
-        MARCADOR DEL USUARIO
+        MARCADOR
     */
 
-    if (!marcadorUsuario) {
+    if (
+        !marcadorUsuario
+    ) {
 
         marcadorUsuario =
             L.marker(
@@ -379,6 +427,7 @@ function actualizarMapaUsuario() {
                 }
 
             )
+
             .addTo(map);
 
     }
@@ -393,11 +442,14 @@ function actualizarMapaUsuario() {
     }
 
 
+
     /*
         CÍRCULO DE PRECISIÓN
     */
 
-    if (!circuloPrecision) {
+    if (
+        !circuloPrecision
+    ) {
 
         circuloPrecision =
             L.circle(
@@ -416,10 +468,10 @@ function actualizarMapaUsuario() {
                         "#4285f4",
 
                     fillOpacity:
-                        0.08,
+                        .08,
 
                     opacity:
-                        0.25,
+                        .25,
 
                     weight:
                         1
@@ -427,6 +479,7 @@ function actualizarMapaUsuario() {
                 }
 
             )
+
             .addTo(map);
 
     }
@@ -447,12 +500,15 @@ function actualizarMapaUsuario() {
     }
 
 
+
     /*
         CENTRAR AUTOMÁTICAMENTE
-        LA PRIMERA VEZ.
+        LA PRIMERA VEZ
     */
 
-    if (primeraUbicacion) {
+    if (
+        primeraUbicacion
+    ) {
 
         map.flyTo(
 
@@ -461,8 +517,10 @@ function actualizarMapaUsuario() {
             17,
 
             {
+
                 duration:
                     1.2
+
             }
 
         );
@@ -476,11 +534,14 @@ function actualizarMapaUsuario() {
 }
 
 
+
 /* ==========================================================
    TEXTO GPS
 ========================================================== */
 
-function actualizarTextoGPS(texto) {
+function actualizarTextoGPS(
+    texto
+) {
 
     const elemento =
         document.getElementById(
@@ -488,7 +549,9 @@ function actualizarTextoGPS(texto) {
         );
 
 
-    if (elemento) {
+    if (
+        elemento
+    ) {
 
         elemento.textContent =
             texto;
@@ -498,11 +561,14 @@ function actualizarTextoGPS(texto) {
 }
 
 
+
 /* ==========================================================
    ERROR GPS
 ========================================================== */
 
-function errorGPS(error) {
+function errorGPS(
+    error
+) {
 
     console.error(
         "Error GPS:",
@@ -514,21 +580,29 @@ function errorGPS(error) {
         "No pudimos obtener tu ubicación";
 
 
-    if (error.code === 1) {
+    if (
+        error.code === 1
+    ) {
 
         mensaje =
             "Permite el acceso a tu ubicación";
 
     }
 
-    else if (error.code === 2) {
+
+    else if (
+        error.code === 2
+    ) {
 
         mensaje =
             "Ubicación no disponible";
 
     }
 
-    else if (error.code === 3) {
+
+    else if (
+        error.code === 3
+    ) {
 
         mensaje =
             "Buscando señal GPS...";
@@ -543,224 +617,101 @@ function errorGPS(error) {
 }
 
 
+
 /* ==========================================================
    CONTROLES DEL MAPA
 ========================================================== */
 
 function configurarControlesMapa() {
 
-    const centerLocation =
-        document.getElementById(
-            "centerLocation"
-        );
 
+    document.getElementById(
+        "centerLocation"
+    )
 
-    const zoomLocation =
-        document.getElementById(
-            "zoomLocation"
-        );
+    ?.addEventListener(
 
+        "click",
 
-    centerLocation
-        ?.addEventListener(
+        function() {
 
-            "click",
-
-            function() {
-
-                if (
-                    !ubicacionActual ||
-                    !map
-                ) {
-
-                    alert(
-                        "Todavía estamos obteniendo tu ubicación."
-                    );
-
-                    return;
-
-                }
-
-
-                map.flyTo(
-
-                    [
-
-                        ubicacionActual.lat,
-
-                        ubicacionActual.lng
-
-                    ],
-
-                    17,
-
-                    {
-
-                        duration:
-                            0.8
-
-                    }
-
-                );
-
-            }
-
-        );
-
-
-    zoomLocation
-        ?.addEventListener(
-
-            "click",
-
-            function() {
-
-                if (
-                    !ubicacionActual ||
-                    !map
-                ) {
-
-                    return;
-
-                }
-
-
-                map.flyTo(
-
-                    [
-
-                        ubicacionActual.lat,
-
-                        ubicacionActual.lng
-
-                    ],
-
-                    19,
-
-                    {
-
-                        duration:
-                            0.8
-
-                    }
-
-                );
-
-            }
-
-        );
-
-}
-
-
-/* ==========================================================
-   SIDEBAR
-========================================================== */
-
-function configurarSidebar() {
-
-    const menuButton =
-        document.getElementById(
-            "menuButton"
-        );
-
-
-    const sidebar =
-        document.getElementById(
-            "mobileSidebar"
-        );
-
-
-    const overlay =
-        document.getElementById(
-            "sidebarOverlay"
-        );
-
-
-    const closeButton =
-        document.getElementById(
-            "closeSidebar"
-        );
-
-
-    function abrirSidebar() {
-
-        sidebar
-            ?.classList
-            .add(
-                "show"
-            );
-
-
-        overlay
-            ?.classList
-            .add(
-                "show"
-            );
-
-
-        document.body.style.overflow =
-            "hidden";
-
-    }
-
-
-    function cerrarSidebar() {
-
-        sidebar
-            ?.classList
-            .remove(
-                "show"
-            );
-
-
-        overlay
-            ?.classList
-            .remove(
-                "show"
-            );
-
-
-        document.body.style.overflow =
-            "";
-
-    }
-
-
-    menuButton
-        ?.addEventListener(
-            "click",
-            abrirSidebar
-        );
-
-
-    closeButton
-        ?.addEventListener(
-            "click",
-            cerrarSidebar
-        );
-
-
-    overlay
-        ?.addEventListener(
-            "click",
-            cerrarSidebar
-        );
-
-
-    document.addEventListener(
-
-        "keydown",
-
-        function(event) {
 
             if (
-                event.key === "Escape"
+                !ubicacionActual
             ) {
 
-                cerrarSidebar();
+                return;
 
             }
+
+
+            map.flyTo(
+
+                [
+
+                    ubicacionActual.lat,
+
+                    ubicacionActual.lng
+
+                ],
+
+                17,
+
+                {
+
+                    duration:
+                        .8
+
+                }
+
+            );
+
+        }
+
+    );
+
+
+
+    document.getElementById(
+        "zoomLocation"
+    )
+
+    ?.addEventListener(
+
+        "click",
+
+        function() {
+
+
+            if (
+                !ubicacionActual
+            ) {
+
+                return;
+
+            }
+
+
+            map.flyTo(
+
+                [
+
+                    ubicacionActual.lat,
+
+                    ubicacionActual.lng
+
+                ],
+
+                19,
+
+                {
+
+                    duration:
+                        .8
+
+                }
+
+            );
 
         }
 
@@ -769,11 +720,13 @@ function configurarSidebar() {
 }
 
 
+
 /* ==========================================================
-   MODAL DE EMERGENCIA
+   MODAL
 ========================================================== */
 
 function configurarModal() {
+
 
     const modal =
         document.getElementById(
@@ -799,9 +752,6 @@ function configurarModal() {
         );
 
 
-    /*
-        ABRIR MODAL
-    */
 
     helpButton
         ?.addEventListener(
@@ -816,18 +766,11 @@ function configurarModal() {
                         "show"
                     );
 
-
-                document.body.style.overflow =
-                    "hidden";
-
             }
 
         );
 
 
-    /*
-        CANCELAR
-    */
 
     cancelButton
         ?.addEventListener(
@@ -836,40 +779,17 @@ function configurarModal() {
 
             function() {
 
-                cerrarModalEmergencia();
+                modal
+                    ?.classList
+                    .remove(
+                        "show"
+                    );
 
             }
 
         );
 
 
-    /*
-        CERRAR AL TOCAR FONDO
-    */
-
-    modal
-        ?.addEventListener(
-
-            "click",
-
-            function(event) {
-
-                if (
-                    event.target === modal
-                ) {
-
-                    cerrarModalEmergencia();
-
-                }
-
-            }
-
-        );
-
-
-    /*
-        CONFIRMAR EMERGENCIA
-    */
 
     confirmButton
         ?.addEventListener(
@@ -878,7 +798,10 @@ function configurarModal() {
 
             async function() {
 
-                if (!ubicacionActual) {
+
+                if (
+                    !ubicacionActual
+                ) {
 
                     alert(
                         "Todavía estamos obteniendo tu ubicación."
@@ -889,56 +812,25 @@ function configurarModal() {
                 }
 
 
-                /*
-                    EVITAR DOBLE CLIC
-                */
-
-                confirmButton.disabled =
-                    true;
-
-
-                const textoAnterior =
-                    confirmButton.innerHTML;
-
-
-                confirmButton.innerHTML = `
-
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-
-                    ENVIANDO...
-
-                `;
-
-
                 const enviado =
                     await enviarEmergenciaAlDashboard(
                         "BOTON_AYUDA"
                     );
 
 
-                confirmButton.disabled =
-                    false;
+                if (
+                    enviado
+                ) {
 
-
-                confirmButton.innerHTML =
-                    textoAnterior;
-
-
-                if (enviado) {
-
-                    cerrarModalEmergencia();
+                    modal
+                        ?.classList
+                        .remove(
+                            "show"
+                        );
 
 
                     alert(
                         "Emergencia enviada al centro de monitoreo."
-                    );
-
-                }
-
-                else {
-
-                    alert(
-                        "No fue posible enviar la emergencia. Verifica tu conexión."
                     );
 
                 }
@@ -950,36 +842,13 @@ function configurarModal() {
 }
 
 
-/* ==========================================================
-   CERRAR MODAL
-========================================================== */
-
-function cerrarModalEmergencia() {
-
-    const modal =
-        document.getElementById(
-            "emergencyModal"
-        );
-
-
-    modal
-        ?.classList
-        .remove(
-            "show"
-        );
-
-
-    document.body.style.overflow =
-        "";
-
-}
-
 
 /* ==========================================================
    BOTÓN LLAMAR
 ========================================================== */
 
 function configurarLlamada() {
+
 
     const boton =
         document.getElementById(
@@ -993,30 +862,28 @@ function configurarLlamada() {
         );
 
 
-    /*
-        MOSTRAR NÚMERO
-    */
-
-    if (numero) {
+    if (
+        numero
+    ) {
 
         numero.textContent =
-            NUMERO_EMERGENCIAS;
+            "";
 
     }
 
 
-    /*
-        BOTÓN LLAMADA
-    */
 
     boton
         ?.addEventListener(
 
             "click",
 
-            async function() {
+            function() {
 
-                if (!ubicacionActual) {
+
+                if (
+                    !ubicacionActual
+                ) {
 
                     alert(
                         "Esperando tu ubicación GPS."
@@ -1028,51 +895,17 @@ function configurarLlamada() {
 
 
                 /*
-                ==========================================
-                PRIMERO ENVIAMOS LA UBICACIÓN
-                ==========================================
+                    NO usamos await.
+
+                    Intentamos enviar la ubicación
+                    y abrimos inmediatamente el
+                    marcador del teléfono.
                 */
 
-                console.log(
-                    "📤 Enviando ubicación antes de llamar..."
+                enviarEmergenciaAlDashboard(
+                    "LLAMADA"
                 );
 
-
-                const enviado =
-                    await enviarEmergenciaAlDashboard(
-                        "LLAMADA"
-                    );
-
-
-                if (enviado) {
-
-                    console.log(
-                        "✅ Ubicación enviada al centro de monitoreo."
-                    );
-
-                }
-
-                else {
-
-                    /*
-                        NO BLOQUEAMOS LA LLAMADA.
-
-                        Aunque Internet falle,
-                        el usuario debe poder llamar.
-                    */
-
-                    console.warn(
-                        "⚠️ No se pudo enviar la ubicación, pero se continuará con la llamada."
-                    );
-
-                }
-
-
-                /*
-                ==========================================
-                ABRIR TELÉFONO
-                ==========================================
-                */
 
                 window.location.href =
                     "tel:" +
@@ -1085,58 +918,23 @@ function configurarLlamada() {
 }
 
 
+
 /* ==========================================================
-   ENVIAR EMERGENCIA AL SERVIDOR
+   ENVIAR EMERGENCIA AL ADMIN
 ========================================================== */
 
 async function enviarEmergenciaAlDashboard(
     origen
 ) {
 
-    /*
-        NECESITAMOS GPS.
-    */
-
-    if (!ubicacionActual) {
-
-        console.error(
-            "No existe ubicación GPS."
-        );
+    if (
+        !ubicacionActual
+    ) {
 
         return false;
 
     }
 
-
-    /*
-        SI YA EXISTE UNA EMERGENCIA ACTIVA,
-        NO CREAMOS OTRA.
-
-        SOLAMENTE ACTUALIZAMOS SU GPS.
-    */
-
-    if (
-        emergenciaActiva &&
-        idEmergenciaActiva
-    ) {
-
-        console.log(
-            "Ya existe una emergencia activa:",
-            idEmergenciaActiva
-        );
-
-
-        await actualizarUbicacionDashboard();
-
-
-        return true;
-
-    }
-
-
-    /*
-        OBJETO QUE RECIBE crear.php
-    */
 
     const emergencia = {
 
@@ -1153,23 +951,51 @@ async function enviarEmergenciaAlDashboard(
             ubicacionActual.lng,
 
         precision:
-            ubicacionActual.accuracy
+            ubicacionActual.accuracy,
+
+        estado:
+            "ACTIVA",
+
+        fecha:
+            new Date().toISOString()
 
     };
 
 
+
+    /*
+        PARA PRUEBAS
+    */
+
+    localStorage.setItem(
+
+        "ultimaEmergencia",
+
+        JSON.stringify(
+            emergencia
+        )
+
+    );
+
+
     console.log(
-        "📤 Enviando emergencia:",
+        "Enviando emergencia:",
         emergencia
     );
 
 
+
+    /*
+        API REAL
+    */
+
     try {
+
 
         const response =
             await fetch(
 
-                API_CREAR_EMERGENCIA,
+                API_EMERGENCIAS,
 
                 {
 
@@ -1186,141 +1012,51 @@ async function enviarEmergenciaAlDashboard(
                     body:
                         JSON.stringify(
                             emergencia
-                        ),
-
-                    cache:
-                        "no-store"
+                        )
 
                 }
 
             );
 
 
-        /*
-            ERROR HTTP
-        */
-
-        if (!response.ok) {
-
-            const texto =
-                await response.text();
-
-
-            console.error(
-                "Respuesta PHP:",
-                texto
-            );
-
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
-                "HTTP " +
-                response.status
+                "Error enviando emergencia"
             );
 
         }
 
-
-        /*
-            RESPUESTA JSON
-        */
 
         const data =
             await response.json();
 
 
-        console.log(
-            "📥 Respuesta crear.php:",
-            data
-        );
-
-
-        if (!data.ok) {
-
-            throw new Error(
-                data.mensaje ||
-                "El servidor rechazó la emergencia."
-            );
-
-        }
-
-
-        /*
-        ==========================================
-        GUARDAR ID DE MYSQL
-        ==========================================
-        */
-
         idEmergenciaActiva =
-            Number(
-                data.id
-            );
-
-
-        if (
-            !idEmergenciaActiva ||
-            Number.isNaN(
-                idEmergenciaActiva
-            )
-        ) {
-
-            throw new Error(
-                "El servidor no devolvió un ID válido."
-            );
-
-        }
+            data.id;
 
 
         emergenciaActiva =
             true;
 
 
-        /*
-            GUARDAMOS EL ID LOCALMENTE.
+        return true;
 
-            Esto permite recuperarlo si la
-            página se recarga.
-        */
+    }
 
-        localStorage.setItem(
-
-            "idEmergenciaActiva",
-
-            String(
-                idEmergenciaActiva
-            )
-
-        );
+    catch (
+        error
+    ) {
 
 
-        localStorage.setItem(
+        console.warn(
 
-            "emergenciaActiva",
+            "Backend todavía no conectado:",
 
-            "true"
+            error
 
-        );
-
-
-        console.log(
-            "🚨 EMERGENCIA CREADA"
-        );
-
-
-        console.log(
-            "ID:",
-            idEmergenciaActiva
-        );
-
-
-        console.log(
-            "Latitud:",
-            ubicacionActual.lat
-        );
-
-
-        console.log(
-            "Longitud:",
-            ubicacionActual.lng
         );
 
 
@@ -1328,306 +1064,106 @@ async function enviarEmergenciaAlDashboard(
 
     }
 
-    catch (error) {
-
-        console.error(
-            "❌ ERROR ENVIANDO EMERGENCIA:",
-            error
-        );
-
-
-        return false;
-
-    }
-
 }
 
 
+
 /* ==========================================================
-   ACTUALIZAR UBICACIÓN EN MYSQL
+   ACTUALIZAR UBICACIÓN EN EL ADMIN
 ========================================================== */
 
 async function actualizarUbicacionDashboard() {
 
-    /*
-        NO ACTUALIZAMOS SI NO EXISTE
-        EMERGENCIA.
-    */
-
     if (
-        !emergenciaActiva ||
         !idEmergenciaActiva ||
         !ubicacionActual
     ) {
 
-        return false;
+        return;
 
     }
-
-
-    /*
-        EVITAR QUE watchPosition()
-        MANDE VARIAS PETICIONES
-        SIMULTÁNEAMENTE.
-    */
-
-    if (actualizandoUbicacion) {
-
-        return false;
-
-    }
-
-
-    actualizandoUbicacion =
-        true;
-
-
-    const datos = {
-
-        id:
-            idEmergenciaActiva,
-
-        latitud:
-            ubicacionActual.lat,
-
-        longitud:
-            ubicacionActual.lng,
-
-        precision:
-            ubicacionActual.accuracy
-
-    };
 
 
     try {
 
-        const response =
-            await fetch(
 
-                API_ACTUALIZAR_EMERGENCIA,
+        await fetch(
 
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify(
-                            datos
-                        ),
-
-                    cache:
-                        "no-store"
-
-                }
-
-            );
-
-
-        if (!response.ok) {
-
-            const texto =
-                await response.text();
-
-
-            console.error(
-                "Respuesta actualizar.php:",
-                texto
-            );
-
-
-            throw new Error(
-                "HTTP " +
-                response.status
-            );
-
-        }
-
-
-        const resultado =
-            await response.json();
-
-
-        if (!resultado.ok) {
-
-            throw new Error(
-                resultado.mensaje ||
-                "No se pudo actualizar la ubicación."
-            );
-
-        }
-
-
-        console.log(
-
-            "📍 GPS actualizado en servidor:",
+            `${API_EMERGENCIAS}/${idEmergenciaActiva}/ubicacion`,
 
             {
-                id:
-                    idEmergenciaActiva,
 
-                lat:
-                    ubicacionActual.lat,
+                method:
+                    "PATCH",
 
-                lng:
-                    ubicacionActual.lng
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify({
+
+                        latitud:
+                            ubicacionActual.lat,
+
+                        longitud:
+                            ubicacionActual.lng,
+
+                        precision:
+                            ubicacionActual.accuracy,
+
+                        fecha:
+                            new Date().toISOString()
+
+                    })
+
             }
 
         );
 
-
-        return true;
-
     }
 
-    catch (error) {
-
-        console.error(
-            "❌ Error actualizando ubicación:",
-            error
-        );
-
-
-        return false;
-
-    }
-
-    finally {
-
-        actualizandoUbicacion =
-            false;
-
-    }
-
-}
-
-
-/* ==========================================================
-   RECUPERAR EMERGENCIA ACTIVA
-========================================================== */
-
-function recuperarEmergenciaActiva() {
-
-    const idGuardado =
-        localStorage.getItem(
-            "idEmergenciaActiva"
-        );
-
-
-    const estadoGuardado =
-        localStorage.getItem(
-            "emergenciaActiva"
-        );
-
-
-    if (
-        idGuardado &&
-        estadoGuardado === "true"
+    catch (
+        error
     ) {
 
-        const id =
-            Number(
-                idGuardado
-            );
+        console.warn(
 
+            "No se pudo actualizar la ubicación:",
 
-        if (
-            Number.isFinite(id) &&
-            id > 0
-        ) {
+            error
 
-            idEmergenciaActiva =
-                id;
-
-
-            emergenciaActiva =
-                true;
-
-
-            console.log(
-                "Emergencia recuperada:",
-                idEmergenciaActiva
-            );
-
-        }
+        );
 
     }
 
 }
 
-
-/* ==========================================================
-   NOTIFICACIONES
-========================================================== */
-
-function configurarNotificaciones() {
-
-    const button =
-        document.getElementById(
-            "notificationButton"
-        );
-
-
-    button
-        ?.addEventListener(
-
-            "click",
-
-            function() {
-
-                alert(
-                    "No tienes notificaciones nuevas."
-                );
-
-            }
-
-        );
-
-}
 
 
 /* ==========================================================
    INICIAR APP
 ========================================================== */
 
-function iniciarApp() {
-
-    console.log(
-        "Iniciando CityFix..."
-    );
+async function iniciarApp() {
 
 
     /*
-    ======================================================
-    IMPORTANTE
-
-    Navbar, Sidebar y Modal ya son cargados
-    directamente por PHP en index.php.
-
-    NO usamos fetch() para cargarlos.
-    ======================================================
+        Primero cargamos navbar,
+        sidebar y modal.
     */
+
+    await cargarComponentes();
+
 
 
     /*
-        RECUPERAR EMERGENCIA
+        Después configuramos los eventos
+        que dependen de esos componentes.
     */
-
-    recuperarEmergenciaActiva();
-
-
-    /*
-        CONFIGURAR INTERFAZ
-    */
-
-    configurarSidebar();
 
     configurarModal();
 
@@ -1635,29 +1171,25 @@ function iniciarApp() {
 
     configurarControlesMapa();
 
-    configurarNotificaciones();
 
 
     /*
-        MAPA
+        Inicializamos mapa.
     */
 
     iniciarMapa();
 
 
+
     /*
-        CORREGIR DIMENSIONES LEAFLET
+        Ajustamos Leaflet.
     */
 
     setTimeout(
 
         function() {
 
-            if (map) {
-
-                map.invalidateSize();
-
-            }
+            map.invalidateSize();
 
         },
 
@@ -1666,18 +1198,15 @@ function iniciarApp() {
     );
 
 
+
     /*
-        GPS
+        GPS AUTOMÁTICO.
     */
 
     iniciarGPS();
 
-
-    console.log(
-        "CityFix iniciado."
-    );
-
 }
+
 
 
 /* ==========================================================
@@ -1705,6 +1234,7 @@ window.addEventListener(
     }
 
 );
+
 
 
 /* ==========================================================
