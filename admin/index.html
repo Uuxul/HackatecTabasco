@@ -54,7 +54,7 @@
         /* ============ SIDEBAR ============ */
         .sidebar { width: 260px; background-color: var(--bg-sidebar); color: var(--white); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
         .logo-container { display: flex; align-items: center; gap: 12px; padding: 0 20px 30px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .logo-icon { background-color: var(--white); color: var(--bg-sidebar); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--white); padding: 3px; flex-shrink: 0; }
         .logo-text h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
         .logo-text p { font-size: 9px; color: #94A3B8; letter-spacing: 1px; font-weight: 600; }
         .nav-menu { list-style: none; margin-top: 20px; flex-grow: 1; }
@@ -116,22 +116,186 @@
         .btn-success:hover { background: #059669; }
 
         #map { width: 100%; height: 100%; border-radius: 8px; flex-grow: 1; z-index: 1; min-height: 350px; }
+        .leaflet-container { cursor: default; }
+        body.modo-seleccion .leaflet-container { cursor: crosshair !important; }
         
         .map-legend { display: flex; justify-content: center; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-main); }
         .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
+        /* ============================================================
+           MARCADORES PROFESIONALES
+           ============================================================ */
         .custom-marker-wrapper { background: transparent !important; border: none !important; }
-        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position: relative; transition: transform 0.15s; }
-        .marker-patrol { background-color: var(--bg-sidebar); width: 35px; height: 25px; }
-        .marker-ambulance { background-color: var(--red); width: 35px; height: 25px; }
-        .marker-location { background-color: var(--orange); width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; font-size: 14px; }
-        .marker-emergency { background-color: var(--red); width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; font-size: 14px; animation: emergencyPulse 1.5s infinite; }
-        @keyframes emergencyPulse {
-            0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
-            50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+
+        .km-marker {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));
+            transition: transform 0.2s ease;
         }
-        .marker-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); color: white; font-size: 10px; font-weight: 700; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8); background: rgba(0,0,0,0.5); padding: 1px 5px; border-radius: 3px; pointer-events: none; }
+        .km-marker:hover { transform: scale(1.08); }
+
+        .km-vehicle {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 3px solid #FFFFFF;
+            position: relative;
+        }
+        .km-vehicle svg { width: 22px; height: 22px; display: block; }
+
+        .km-patrol { background: linear-gradient(145deg, #12294d 0%, #0B1B36 100%); }
+        .km-ambulance { background: linear-gradient(145deg, #F87171 0%, #EF4444 100%); }
+
+        .km-vehicle::before {
+            content: '';
+            position: absolute; inset: -6px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.25);
+        }
+
+        .km-heading {
+            position: absolute;
+            top: -10px; left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 9px solid #FFFFFF;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+            transform-origin: 50% 32px;
+        }
+
+        .km-label {
+            position: absolute;
+            bottom: -22px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(11, 27, 54, 0.92);
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            padding: 2px 7px;
+            border-radius: 5px;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.18);
+            pointer-events: none;
+        }
+
+        .km-user {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 3px solid var(--orange);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .km-user::after {
+            content: '';
+            position: absolute; inset: -10px;
+            border-radius: 50%;
+            border: 2px solid var(--orange);
+            opacity: 0.5;
+            animation: kmPing 2s ease-out infinite;
+        }
+        .km-user svg { width: 16px; height: 16px; }
+
+        @keyframes kmPing {
+            0% { transform: scale(0.6); opacity: 0.8; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .km-emergency {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: var(--red);
+            border: 3px solid #FFFFFF;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            animation: kmEmergency 1.4s ease-in-out infinite;
+        }
+        .km-emergency svg { width: 18px; height: 18px; }
+        .km-emergency::before,
+        .km-emergency::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2px solid var(--red);
+            animation: kmRipple 1.8s ease-out infinite;
+        }
+        .km-emergency::after { animation-delay: 0.9s; }
+
+        @keyframes kmEmergency {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes kmRipple {
+            0% { transform: scale(1); opacity: 0.75; }
+            100% { transform: scale(2.1); opacity: 0; }
+        }
+
+        /* ============ SPEED HUD ============ */
+        .km-speedhud {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, rgba(11,27,54,0.96), rgba(22,41,77,0.96));
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(96,165,250,0.45);
+            border-radius: 9px;
+            padding: 5px 9px 6px;
+            min-width: 62px;
+            text-align: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset;
+            pointer-events: none;
+            animation: kmHudIn 0.3s ease;
+        }
+        @keyframes kmHudIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .km-speedhud .hud-value {
+            font-size: 15px;
+            font-weight: 800;
+            color: #FFFFFF;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+        .km-speedhud .hud-unit {
+            font-size: 8px;
+            font-weight: 700;
+            color: #93C5FD;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .km-speedhud .hud-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .km-speedhud .hud-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #60A5FA, #EF4444);
+            border-radius: 2px;
+            transition: width 0.2s linear;
+        }
+        .km-speedhud .hud-status {
+            font-size: 7px;
+            font-weight: 800;
+            color: #F87171;
+            letter-spacing: 1.2px;
+            margin-top: 3px;
+            text-transform: uppercase;
+            animation: kmBlink 1s infinite;
+        }
+        @keyframes kmBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         .units-status { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
         .unit-chip { background: var(--bg-body); border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
@@ -156,13 +320,11 @@
         .input:focus, .select:focus { border-color: var(--bg-active); box-shadow: 0 0 0 3px rgba(22,82,198,0.15); }
         .input { min-width: 140px; }
 
-        /* Filters */
         .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
         .filter-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .filter-chip:hover { border-color: var(--bg-active); color: var(--bg-active); }
         .filter-chip.active { background: var(--bg-active); color: white; border-color: var(--bg-active); }
 
-        /* Units Grid */
         .units-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
         .unit-card {
             background: var(--bg-body); border: 1px solid var(--border); border-radius: 10px;
@@ -189,7 +351,6 @@
         .unit-card .btn-delete { background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; }
         .unit-card .btn-delete:hover { background: var(--red-light); }
 
-        /* Emergencies */
         .emergency-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
         .emergency-card {
             background: var(--bg-body); border: 1px solid var(--border); border-left: 4px solid var(--red);
@@ -207,16 +368,14 @@
         .priority-baja { background: var(--green-light); color: var(--green); }
         .emergency-meta { font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; }
         .emergency-meta i { width: 14px; }
-        .emergency-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .emergency-actions { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
         .emergency-actions .btn { padding: 5px 10px; font-size: 11px; }
 
-        /* Charts */
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
         .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
         .chart-card h3 { font-size: 14px; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .chart-card canvas { max-height: 260px; }
 
-        /* Modal */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
             display: none; align-items: center; justify-content: center; z-index: 9999;
@@ -229,14 +388,7 @@
             animation: slideUp 0.3s ease;
         }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal h3 { font-size: 18px; color: var(--text-main); margin-bottom: 5px; }
-        .modal .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
-        .modal-field { margin-bottom: 14px; }
-        .modal-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
-        .modal-field .input, .modal-field .select { width: 100%; }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
-        /* Side Detail Panel */
         .detail-panel {
             position: fixed; top: 0; right: 0; bottom: 0; width: 360px;
             background: var(--bg-card); border-left: 1px solid var(--border);
@@ -254,7 +406,6 @@
         .detail-row .label { color: var(--text-muted); font-weight: 500; }
         .detail-row .value { color: var(--text-main); font-weight: 700; }
 
-        /* Toasts */
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
         .toast {
             background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--blue);
@@ -278,19 +429,95 @@
         .empty-state { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
         .empty-state i { font-size: 32px; margin-bottom: 10px; opacity: 0.5; display: block; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        /* Responsive */
         @media (max-width: 900px) {
             .stats-container { grid-template-columns: repeat(2, 1fr); }
             .sidebar { width: 70px; }
             .logo-text, .nav-menu li span, .sidebar-footer { display: none; }
             .nav-menu li { justify-content: center; padding: 14px; }
             .detail-panel { width: 100%; }
+            .logo-img { width: 38px; height: 38px; }
+        }
+
+        /* ============================================
+           AUTOCOMPLETADO DE DIRECCIONES
+           ============================================ */
+        .autocomplete-wrapper {
+            position: relative;
+            display: inline-block;
+            min-width: 260px;
+            flex: 1 1 260px;
+        }
+        .autocomplete-wrapper .input {
+            width: 100%;
+            min-width: 0;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 5000;
+            display: none;
+            animation: fadeIn 0.15s ease;
+        }
+        .autocomplete-list.active { display: block; }
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-main);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            transition: background 0.15s;
+        }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background: var(--blue-light);
+        }
+        body.dark .autocomplete-item:hover,
+        body.dark .autocomplete-item.selected {
+            background: rgba(59,130,246,0.2);
+        }
+        .autocomplete-item i {
+            color: var(--bg-active);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .autocomplete-item .ac-main {
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        .autocomplete-item .ac-secondary {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .autocomplete-item.loading,
+        .autocomplete-item.empty {
+            justify-content: center;
+            color: var(--text-muted);
+            font-style: italic;
+            cursor: default;
+            pointer-events: none;
+        }
+        .autocomplete-item.loading i,
+        .autocomplete-item.empty i {
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -298,7 +525,7 @@
 
     <aside class="sidebar">
         <div class="logo-container">
-            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <img src="logo.jpeg" alt="KANAN EMERGENCIAS" class="logo-img">
             <div class="logo-text">
                 <h1>KANAN</h1>
                 <p>EMERGENCIAS</p>
@@ -329,7 +556,7 @@
                 </div>
                 <div class="icon-btn" id="btnNotifications" title="Notificaciones">
                     <i class="fa-solid fa-bell"></i>
-                    <span class="badge" id="notifBadge">3</span>
+                    <span class="badge" id="notifBadge">0</span>
                 </div>
                 <div class="user-profile">
                     <img src="https://i.pravatar.cc/150?img=11" alt="Avatar">
@@ -380,7 +607,7 @@
                 <div class="map-legend">
                     <div class="legend-item"><span class="legend-dot" style="background: var(--red);"></span> Ambulancia</div>
                     <div class="legend-item"><span class="legend-dot" style="background: var(--bg-sidebar);"></span> Patrulla</div>
-                    <div class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> Tú</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> Ubicación reporte</div>
                     <div class="legend-item"><span class="legend-dot" style="background: var(--red); animation: pulse 1.5s infinite;"></span> Emergencia</div>
                     <div class="legend-item"><span class="legend-dot" style="background: var(--blue);"></span> Ruta activa</div>
                 </div>
@@ -393,21 +620,21 @@
         <div class="view" id="view-emergencias">
             <div class="panel-card" style="margin-bottom: 18px;">
                 <h3><i class="fa-solid fa-plus-circle" style="color: var(--red);"></i> Registrar emergencia</h3>
-                <p class="subtitle">Crea una emergencia y el sistema asignará la unidad más cercana automáticamente.</p>
+                <p class="subtitle">Escribe una dirección o lugar (ej: "Tucta", "Naranjas", "Centro") y te mostraremos sugerencias cercanas. La unidad más cercana se asigna automáticamente.</p>
                 <div class="form-row">
                     <select class="select" id="tipoEmergencia">
-                        <option value="robo">🚨 Robo</option>
-                        <option value="accidente">🚗 Accidente</option>
-                        <option value="incendio">🔥 Incendio</option>
-                        <option value="violencia">⚠️ Violencia</option>
-                        <option value="medica">🏥 Emergencia médica</option>
+                        <option value="accidente">🚗 Accidente / Choque (policía)</option>
+                        <option value="medica">🏥 Emergencia médica (ambulancia)</option>
                     </select>
                     <select class="select" id="prioridadEmergencia">
                         <option value="alta">🔴 Prioridad alta</option>
                         <option value="media">🟠 Prioridad media</option>
                         <option value="baja">🟢 Prioridad baja</option>
                     </select>
-                    <input type="text" class="input" id="direccionEmergencia" placeholder="Dirección (opcional)" maxlength="60">
+                    <div class="autocomplete-wrapper">
+                        <input type="text" class="input" id="direccionEmergencia" placeholder="Dirección o lugar (ej: Tucta, Naranjas, Centro)" maxlength="80" autocomplete="off">
+                        <div class="autocomplete-list" id="autocompleteList"></div>
+                    </div>
                     <button class="btn btn-danger" id="btnCrearEmergencia">
                         <i class="fa-solid fa-bullhorn"></i> Crear emergencia
                     </button>
@@ -432,32 +659,43 @@
             <div class="unidades-container">
                 <div class="panel-card">
                     <h3><i class="fa-solid fa-plus-circle" style="color: var(--bg-active);"></i> Agregar unidad temporal</h3>
-                    <p class="subtitle">Las unidades temporales se eliminan automáticamente al recargar la página.</p>
+                    <p class="subtitle">Haz clic en "Seleccionar punto en mapa" y luego haz clic en el mapa para definir el punto de partida. Las unidades temporales se eliminan al recargar la página.</p>
                     <div class="form-row">
                         <select class="select" id="tipoUnidadTemporal">
                             <option value="patrol">🚔 Patrulla</option>
                             <option value="ambulance">🚑 Ambulancia</option>
                         </select>
                         <input type="text" class="input" id="idUnidadTemporal" placeholder="ID (ej: P-04)" maxlength="8">
-                        <button class="btn" id="btnAgregarUnidad">
-                            <i class="fa-solid fa-plus"></i> Agregar
+                        <button class="btn btn-secondary" id="btnSeleccionarPunto">
+                            <i class="fa-solid fa-location-dot"></i> Seleccionar punto en mapa
+                        </button>
+                        <button class="btn" id="btnAgregarUnidad" disabled>
+                            <i class="fa-solid fa-plus"></i> Agregar unidad
                         </button>
                         <button class="btn btn-secondary" id="btnLimpiarTemporales">
                             <i class="fa-solid fa-trash"></i> Limpiar temporales
                         </button>
                     </div>
+                    <p class="subtitle" id="puntoSeleccionadoInfo" style="margin-top: 10px; color: var(--green); display: none;">
+                        <i class="fa-solid fa-check-circle"></i> Punto de partida seleccionado. Ahora presiona "Agregar unidad".
+                    </p>
                 </div>
 
                 <div class="panel-card" style="flex-grow: 1;">
                     <h3><i class="fa-solid fa-list" style="color: var(--bg-active);"></i> Unidades activas</h3>
-                    <p class="subtitle" id="unidadesCount">Cargando...</p>
+                    <p class="subtitle" id="unidadesCount">0 unidades activas</p>
                     <div class="filters" id="unidadesFilters">
                         <div class="filter-chip active" data-filter="todas">Todas</div>
                         <div class="filter-chip" data-filter="patrol">Patrullas</div>
                         <div class="filter-chip" data-filter="ambulance">Ambulancias</div>
                         <div class="filter-chip" data-filter="temporal">Temporales</div>
                     </div>
-                    <div class="units-grid" id="unitsGrid"></div>
+                    <div class="units-grid" id="unitsGrid">
+                        <div class="empty-state" style="grid-column:1/-1;">
+                            <i class="fa-solid fa-car"></i>
+                            No hay unidades. Agrega una unidad temporal o define puntos de partida.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -513,8 +751,11 @@
                 </div>
                 <div class="detail-row">
                     <span class="label">Auto-asignar emergencias</span>
-                    <input type="checkbox" id="autoAsignar" checked style="width: 20px; height: 20px;">
+                    <input type="checkbox" id="autoAsignar" checked disabled style="width: 20px; height: 20px; opacity:0.6; cursor:not-allowed;">
                 </div>
+                <p class="subtitle" style="margin-top:-5px;font-size:11px;color:var(--green);">
+                    <i class="fa-solid fa-circle-info"></i> La asignación automática está siempre activa. La unidad más cercana del tipo requerido se envía sola.
+                </p>
                 <div class="detail-row">
                     <span class="label">Notificaciones del sistema</span>
                     <input type="checkbox" id="notificaciones" checked style="width: 20px; height: 20px;">
@@ -528,7 +769,6 @@
 
     </main>
 
-    <!-- Detail Panel -->
     <aside class="detail-panel" id="detailPanel">
         <div class="detail-header">
             <h3 id="detailTitle">Detalles</h3>
@@ -537,12 +777,10 @@
         <div class="detail-body" id="detailBody"></div>
     </aside>
 
-    <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="modalContent"></div>
     </div>
 
-    <!-- Toasts -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -613,17 +851,55 @@
         }).addTo(map);
 
         // ==========================================
-        // ICONOS
+        // ICONOS SVG
         // ==========================================
-        function createCustomIcon(className, label, iconHtml = '', rotatable = false) {
+        const SVG_PATROL = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 11l1.5-3.5A2 2 0 018.3 6h7.4a2 2 0 011.8 1.5L19 11v6a1 1 0 01-1 1h-1.5a1.5 1.5 0 01-3 0h-5a1.5 1.5 0 01-3 0H6a1 1 0 01-1-1v-6z" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M5 11h14" stroke="#FFFFFF" stroke-width="1.6"/>
+            <circle cx="8" cy="16.5" r="1" fill="#FFFFFF"/>
+            <circle cx="16" cy="16.5" r="1" fill="#FFFFFF"/>
+            <path d="M10.5 9h3" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>`;
+
+        const SVG_AMBULANCE = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 11l1.2-3.2A2 2 0 017.1 6.5h6.4a2 2 0 011.9 1.4L16.5 11v6a1 1 0 01-1 1h-1.2a1.5 1.5 0 01-3 0H8.7a1.5 1.5 0 01-3 0H5a1 1 0 01-1-1v-6z" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M4 11h12.5" stroke="#FFFFFF" stroke-width="1.6"/>
+            <path d="M12 7.5v3M10.5 9h3" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7.2" cy="16.5" r="1" fill="#FFFFFF"/>
+            <circle cx="14.2" cy="16.5" r="1" fill="#FFFFFF"/>
+            <path d="M17 8.5h2.2a1.5 1.5 0 011.4 1l.9 2.2V17a1 1 0 01-1 1h-1.3" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>`;
+
+        const SVG_USER = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="3.2" stroke="#F97316" stroke-width="1.8"/>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#F97316" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>`;
+
+        const SVG_ACCIDENT = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3L2 20h20L12 3z" stroke="#FFFFFF" stroke-width="1.7" stroke-linejoin="round"/>
+            <path d="M12 9v5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round"/>
+            <circle cx="12" cy="17.2" r="1.1" fill="#FFFFFF"/>
+        </svg>`;
+
+        const SVG_MEDICAL = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21s-7.5-4.6-9.3-9.6C1.4 7.7 3.6 4.5 7 4.5c2 0 3.7 1.2 5 3 1.3-1.8 3-3 5-3 3.4 0 5.6 3.2 4.3 6.9C19.5 16.4 12 21 12 21z" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M7.5 12h3l1-2.4 1.6 4.2 1-1.8h3" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+
+        const SVG_CHECK = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12.5l4.2 4.2L19 7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+
+        function createCustomIcon(className, label, iconHtml = '', rotatable = false, extraClass = '') {
             return L.divIcon({
                 className: 'custom-marker-wrapper',
-                html: `<div class="custom-marker ${className}">
-                            ${iconHtml}
-                            <div class="marker-label">${label}</div>
+                html: `<div class="km-marker ${extraClass}">
+                            ${rotatable ? `<div class="km-heading"></div>` : ''}
+                            <div class="km-vehicle ${className}">${iconHtml}</div>
+                            <div class="km-label">${label}</div>
                        </div>`,
-                iconSize: [35, 25],
-                iconAnchor: [17, 12]
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
             });
         }
 
@@ -654,12 +930,20 @@
                 }).addTo(map);
 
                 marcadorUsuario = L.marker(e.latlng, {
-                    icon: createCustomIcon('marker-location', 'Tú', '<i class="fa-solid fa-location-crosshairs"></i>')
-                }).addTo(map).bindPopup(`<b>Tu ubicación</b><br>Precisión: ±${Math.round(e.accuracy)} m`);
+                    icon: L.divIcon({
+                        className: 'custom-marker-wrapper',
+                        html: `<div class="km-marker">
+                                   <div class="km-user">${SVG_USER}</div>
+                                   <div class="km-label">Tú</div>
+                               </div>`,
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 17]
+                    })
+                }).addTo(map).bindPopup(`<b>Ubicación reporte</b><br>Precisión: ±${Math.round(e.accuracy)} m`);
 
                 centroSimulacion = e.latlng;
                 ubicacionObtenida = true;
-                iniciarSimulacion(e.latlng);
+                iniciarSimulacionBase(e.latlng);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación';
                 map.off('locationfound', onFound);
@@ -672,10 +956,18 @@
                 map.setView(centroSimulacion, 15);
                 if (marcadorUsuario) map.removeLayer(marcadorUsuario);
                 marcadorUsuario = L.marker(centroSimulacion, {
-                    icon: createCustomIcon('marker-location', 'Tú (aprox)', '<i class="fa-solid fa-location-crosshairs"></i>')
-                }).addTo(map).bindPopup('Ubicación aproximada');
+                    icon: L.divIcon({
+                        className: 'custom-marker-wrapper',
+                        html: `<div class="km-marker">
+                                   <div class="km-user">${SVG_USER}</div>
+                                   <div class="km-label">Tú</div>
+                               </div>`,
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 17]
+                    })
+                }).addTo(map).bindPopup('Ubicación reporte (aprox)');
                 ubicacionObtenida = true;
-                iniciarSimulacion(centroSimulacion);
+                iniciarSimulacionBase(centroSimulacion);
                 if (!auto) toast('Ubicación no disponible', 'Usando ubicación por defecto', 'warning');
                 map.off('locationerror', onError);
             };
@@ -716,6 +1008,244 @@
         }
 
         // ==========================================
+        // GEOCODIFICACIÓN
+        // ==========================================
+        async function geocodificar(direccion) {
+            const viewbox = [
+                centroSimulacion.lng - 0.20, centroSimulacion.lat - 0.20,
+                centroSimulacion.lng + 0.20, centroSimulacion.lat + 0.20
+            ].join(',');
+            const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&viewbox=${viewbox}&q=${encodeURIComponent(direccion)}`;
+            try {
+                const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+                const data = await res.json();
+                if (!data.length) return null;
+                return L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+            } catch (err) {
+                console.warn('Error geocoding:', err);
+                return null;
+            }
+        }
+
+        async function reverseGeocodificar(latlng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=18&addressdetails=1`;
+            try {
+                const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+                const data = await res.json();
+                return data.display_name?.split(',').slice(0, 3).join(',') || 'Punto seleccionado';
+            } catch {
+                return 'Punto seleccionado';
+            }
+        }
+
+        // ==========================================
+        // AUTOCOMPLETADO DE DIRECCIONES
+        // ==========================================
+        const inputDireccion = document.getElementById('direccionEmergencia');
+        const autocompleteList = document.getElementById('autocompleteList');
+        let acTimeout = null;
+        let acSelectedIndex = -1;
+        let acResults = [];
+        let acAbortController = null;
+
+        function getCentro() {
+            const c = centroSimulacion || L.latLng(20.9754, -89.6169);
+            return { lat: c.lat, lng: c.lng };
+        }
+
+        async function buscarSugerencias(query) {
+            if (!query || query.trim().length < 2) {
+                ocultarAutocomplete();
+                return;
+            }
+
+            mostrarLoading();
+
+            if (acAbortController) acAbortController.abort();
+            acAbortController = new AbortController();
+            const signal = acAbortController.signal;
+
+            const { lat, lng } = getCentro();
+            const delta = 0.35;
+            const viewbox = [
+                lng - delta, lat + delta,
+                lng + delta, lat - delta
+            ].join(',');
+
+            let resultados = [];
+
+            try {
+                const urlNom = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&addressdetails=1&accept-language=es&viewbox=${viewbox}&bounded=0&q=${encodeURIComponent(query)}`;
+                const res = await fetch(urlNom, {
+                    signal,
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    resultados = (data || []).map(item => {
+                        const addr = item.address || {};
+                        const principal = item.name
+                            || addr.road
+                            || addr.neighbourhood
+                            || addr.suburb
+                            || addr.village
+                            || addr.town
+                            || addr.city
+                            || item.display_name?.split(',')[0]
+                            || 'Lugar';
+                        const secundarios = [
+                            addr.road,
+                            addr.suburb || addr.neighbourhood || addr.village || addr.town,
+                            addr.city || addr.municipality || addr.county,
+                            addr.state
+                        ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+                        return {
+                            nombre: principal,
+                            detalles: secundarios.join(', '),
+                            lat: parseFloat(item.lat),
+                            lng: parseFloat(item.lon)
+                        };
+                    });
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                console.warn('Nominatim error:', err);
+            }
+
+            if (resultados.length === 0) {
+                try {
+                    const urlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lang=es&limit=8&lat=${lat}&lon=${lng}`;
+                    const res = await fetch(urlPhoton, { signal });
+                    if (res.ok) {
+                        const data = await res.json();
+                        resultados = (data.features || []).map(f => {
+                            const p = f.properties || {};
+                            const principal = p.name || p.street || p.city || p.town || p.village || p.county || 'Lugar';
+                            const detalles = [p.street, p.city, p.town, p.village, p.state, p.country]
+                                .filter(Boolean).filter((v, i, a) => a.indexOf(v) === i)
+                                .join(', ');
+                            return {
+                                nombre: principal,
+                                detalles,
+                                lat: f.geometry.coordinates[1],
+                                lng: f.geometry.coordinates[0]
+                            };
+                        });
+                    }
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    console.warn('Photon error:', err);
+                }
+            }
+
+            acResults = resultados;
+            renderAutocomplete();
+        }
+
+        function mostrarLoading() {
+            autocompleteList.innerHTML = `<div class="autocomplete-item loading"><i class="fa-solid fa-spinner fa-spin"></i> Buscando lugares cercanos...</div>`;
+            autocompleteList.classList.add('active');
+            acSelectedIndex = -1;
+        }
+
+        function renderAutocomplete() {
+            if (acResults.length === 0) {
+                autocompleteList.innerHTML = `<div class="autocomplete-item empty"><i class="fa-solid fa-location-dot"></i> Sin resultados cercanos</div>`;
+                autocompleteList.classList.add('active');
+                return;
+            }
+
+            autocompleteList.innerHTML = acResults.map((r, i) => `
+                <div class="autocomplete-item" data-index="${i}">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <div class="ac-main">${escapeHtml(r.nombre)}</div>
+                        ${r.detalles ? `<div class="ac-secondary">${escapeHtml(r.detalles)}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            autocompleteList.classList.add('active');
+
+            autocompleteList.querySelectorAll('.autocomplete-item').forEach(item => {
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const idx = parseInt(item.dataset.index);
+                    seleccionarSugerencia(idx);
+                });
+            });
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            })[c]);
+        }
+
+        function seleccionarSugerencia(index) {
+            const r = acResults[index];
+            if (!r) return;
+            inputDireccion.value = r.nombre + (r.detalles ? ', ' + r.detalles.split(',')[0].trim() : '');
+            inputDireccion.dataset.lat = r.lat;
+            inputDireccion.dataset.lng = r.lng;
+            ocultarAutocomplete();
+            map.flyTo([r.lat, r.lng], 16);
+            toast('Ubicación seleccionada', r.nombre, 'success');
+        }
+
+        function ocultarAutocomplete() {
+            autocompleteList.classList.remove('active');
+            autocompleteList.innerHTML = '';
+            acSelectedIndex = -1;
+        }
+
+        inputDireccion.addEventListener('input', () => {
+            delete inputDireccion.dataset.lat;
+            delete inputDireccion.dataset.lng;
+            clearTimeout(acTimeout);
+            const q = inputDireccion.value.trim();
+            if (q.length < 2) {
+                ocultarAutocomplete();
+                return;
+            }
+            acTimeout = setTimeout(() => buscarSugerencias(q), 400);
+        });
+
+        inputDireccion.addEventListener('keydown', (e) => {
+            const items = autocompleteList.querySelectorAll('.autocomplete-item:not(.loading):not(.empty)');
+            if (!autocompleteList.classList.contains('active') || items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                acSelectedIndex = Math.min(acSelectedIndex + 1, items.length - 1);
+                actualizarSeleccion(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                acSelectedIndex = Math.max(acSelectedIndex - 1, 0);
+                actualizarSeleccion(items);
+            } else if (e.key === 'Enter') {
+                if (acSelectedIndex >= 0) {
+                    e.preventDefault();
+                    seleccionarSugerencia(acSelectedIndex);
+                }
+            } else if (e.key === 'Escape') {
+                ocultarAutocomplete();
+            }
+        });
+
+        function actualizarSeleccion(items) {
+            items.forEach((it, i) => it.classList.toggle('selected', i === acSelectedIndex));
+            if (items[acSelectedIndex]) {
+                items[acSelectedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.autocomplete-wrapper')) {
+                ocultarAutocomplete();
+            }
+        });
+
+        // ==========================================
         // RUTEO OSRM
         // ==========================================
         async function obtenerRuta(origen, destino) {
@@ -740,73 +1270,32 @@
         // ==========================================
         // SIMULACIÓN
         // ==========================================
-        const UNIDADES_DEFAULT = [
-            { id: 'P-01', tipo: 'patrol' },
-            { id: 'P-02', tipo: 'patrol' },
-            { id: 'P-03', tipo: 'patrol' },
-            { id: 'A-01', tipo: 'ambulance' },
-            { id: 'A-02', tipo: 'ambulance' }
-        ];
-
         let UNIDADES_TEMPORALES = [];
-        let UNIDADES = [...UNIDADES_DEFAULT];
         const estadoUnidades = {};
         const emergencias = [];
         let filtroUnidades = 'todas';
         let filtroEmergencias = 'todas';
         let velocidadSim = 1;
-        let autoAsignar = true;
+        const autoAsignar = true; // SIEMPRE ACTIVO
 
-        function iniciarSimulacion(centro) {
-            Object.values(estadoUnidades).forEach(u => {
-                if (u.marker) map.removeLayer(u.marker);
-                if (u.polyline) map.removeLayer(u.polyline);
-            });
-            Object.keys(estadoUnidades).forEach(k => delete estadoUnidades[k]);
+        let puntoPartidaSeleccionado = null;
 
-            UNIDADES = [...UNIDADES_DEFAULT, ...UNIDADES_TEMPORALES];
-
-            UNIDADES.forEach((u) => {
-                const inicio = randomPointAround(centro, 0.3, 0.9);
-                const iconFA = u.tipo === 'patrol' ? 'fa-car' : 'fa-truck-medical';
-                const marker = L.marker(inicio, {
-                    icon: createCustomIcon(
-                        u.tipo === 'patrol' ? 'marker-patrol' : 'marker-ambulance',
-                        u.id, `<i class="fa-solid ${iconFA}" style="font-size:12px;"></i>`
-                    )
-                }).addTo(map);
-
-                marker.on('click', () => mostrarDetalleUnidad(u.id));
-
-                estadoUnidades[u.id] = {
-                    info: u, marker, ruta: null, indice: 0, polyline: null,
-                    estado: 'buscando',
-                    velocidad: u.tipo === 'patrol' ? 1 : 1.2,
-                    temporal: u.temporal || false,
-                    destino: null,
-                    distancia: 0,
-                    duracion: 0,
-                    emergenciaAsignada: null,
-                    tiempoLlegada: null
-                };
-            });
-
+        function iniciarSimulacionBase(centro) {
+            centroSimulacion = centro;
+            if (!window._animInterval) {
+                window._animInterval = setInterval(animarUnidades, 200);
+            }
+            if (!window._reasignInterval) {
+                window._reasignInterval = setInterval(() => {
+                    Object.values(estadoUnidades).forEach(est => {
+                        if (est.estado === 'llegado' && !est.emergenciaAsignada) {
+                            asignarNuevaRuta(est.info.id, centroSimulacion);
+                        }
+                    });
+                }, 15000);
+            }
             actualizarPanelUnidades();
             actualizarGridUnidades();
-            UNIDADES.forEach(u => asignarNuevaRuta(u.id, centro));
-            
-            if (window._animInterval) clearInterval(window._animInterval);
-            if (window._reasignInterval) clearInterval(window._reasignInterval);
-            
-            window._animInterval = setInterval(animarUnidades, 200);
-            window._reasignInterval = setInterval(() => {
-                UNIDADES.forEach(u => {
-                    const est = estadoUnidades[u.id];
-                    if (est && est.estado === 'llegado' && !est.emergenciaAsignada) {
-                        asignarNuevaRuta(u.id, centroSimulacion);
-                    }
-                });
-            }, 15000);
         }
 
         async function asignarNuevaRuta(id, centro, destinoFijo = null) {
@@ -816,7 +1305,7 @@
             actualizarGridUnidades();
 
             const origen = est.marker.getLatLng();
-            const destino = destinoFijo || randomPointAround(centro, 0.5, 1.5);
+            const destino = destinoFijo || randomPointAround(centro, 2.0, 4.5);
 
             const ruta = await obtenerRuta(origen, destino);
             if (!ruta) {
@@ -842,6 +1331,50 @@
             actualizarGridUnidades();
         }
 
+        // ==========================================
+        // SPEED HUD
+        // ==========================================
+        function crearSpeedHud(est) {
+            const el = est.marker.getElement();
+            if (!el) return;
+            const wrapper = el.querySelector('.km-marker');
+            if (!wrapper || wrapper.querySelector('.km-speedhud')) return;
+
+            const hud = document.createElement('div');
+            hud.className = 'km-speedhud';
+            hud.innerHTML = `
+                <div class="hud-value">0</div>
+                <div class="hud-unit">km/h</div>
+                <div class="hud-bar"><div class="hud-bar-fill" style="width:0%"></div></div>
+                <div class="hud-status">● En emergencia</div>
+            `;
+            wrapper.appendChild(hud);
+            est.speedHud = hud;
+        }
+
+        function actualizarSpeedHud(est, velocidad, progreso) {
+            if (!est.speedHud) {
+                crearSpeedHud(est);
+                if (!est.speedHud) return;
+            }
+            const val = est.speedHud.querySelector('.hud-value');
+            const fill = est.speedHud.querySelector('.hud-bar-fill');
+            const status = est.speedHud.querySelector('.hud-status');
+            if (val) val.textContent = velocidad;
+            if (fill) fill.style.width = Math.min(100, progreso * 100) + '%';
+            if (status) {
+                status.textContent = est.emergenciaAsignada ? '● En emergencia' : '● En servicio';
+                status.style.color = est.emergenciaAsignada ? '#F87171' : '#60A5FA';
+            }
+        }
+
+        function eliminarSpeedHud(est) {
+            if (est.speedHud && est.speedHud.parentNode) {
+                est.speedHud.parentNode.removeChild(est.speedHud);
+            }
+            est.speedHud = null;
+        }
+
         function animarUnidades() {
             Object.values(estadoUnidades).forEach(est => {
                 if ((est.estado !== 'en_camino' && est.estado !== 'asignado') || !est.ruta) return;
@@ -851,18 +1384,25 @@
                     const estabaAsignada = est.emergenciaAsignada;
                     est.estado = 'llegado';
                     if (est.polyline) { map.removeLayer(est.polyline); est.polyline = null; }
-                    
+                    eliminarSpeedHud(est);
+                    if (est.velocidadOriginal) {
+                        est.velocidad = est.velocidadOriginal;
+                        est.velocidadOriginal = null;
+                    }
+
                     if (estabaAsignada) {
                         const emerg = emergencias.find(e => e.id === estabaAsignada);
                         if (emerg && emerg.estado !== 'resuelta') {
                             emerg.estado = 'en_atencion';
-                            toast('Unidad en el lugar', `${est.info.id} llegó a ${emerg.titulo}`, 'success');
+                            toast('Unidad en el lugar', `${est.info.id} atiende ${emerg.titulo}`, 'success');
                             actualizarGridEmergencias();
-                            setTimeout(() => resolverEmergencia(emerg.id), 8000);
+
+                            const tiempoAtencion = { alta: 6000, media: 8000, baja: 11000 }[emerg.prioridad] || 8000;
+                            setTimeout(() => resolverEmergencia(emerg.id), tiempoAtencion);
                         }
                         est.emergenciaAsignada = null;
                     }
-                    
+
                     actualizarPanelUnidades();
                     actualizarGridUnidades();
                     return;
@@ -883,10 +1423,16 @@
                         actual.lng + (dLng / dist) * paso
                     );
                     est.marker.setLatLng(nuevo);
-                    const inner = est.marker.getElement()?.querySelector('.custom-marker');
-                    if (inner) {
-                        const icon = inner.querySelector('i');
-                        if (icon) icon.style.transform = `rotate(${angulo - 90}deg)`;
+
+                    const progreso = est.ruta.length > 1 ? est.indice / (est.ruta.length - 1) : 0;
+                    const velocidadMostrada = est.emergenciaAsignada
+                        ? Math.round(58 * velocidadSim * (est.velocidad / (est.info.tipo === 'patrol' ? 1 : 1.2)))
+                        : Math.round((est.info.tipo === 'patrol' ? 45 : 52) * velocidadSim);
+                    actualizarSpeedHud(est, velocidadMostrada, progreso);
+
+                    const heading = est.marker.getElement()?.querySelector('.km-heading');
+                    if (heading) {
+                        heading.style.transform = `translateX(-50%) rotate(${angulo - 90}deg)`;
                     }
                 }
             });
@@ -896,17 +1442,14 @@
         // EMERGENCIAS
         // ==========================================
         const TIPOS_EMERGENCIA = {
-            robo: { titulo: 'Robo', icono: 'fa-mask', unidad: 'patrol' },
-            accidente: { titulo: 'Accidente', icono: 'fa-car-burst', unidad: 'ambulance' },
-            incendio: { titulo: 'Incendio', icono: 'fa-fire', unidad: 'ambulance' },
-            violencia: { titulo: 'Violencia', icono: 'fa-hand-fist', unidad: 'patrol' },
-            medica: { titulo: 'Emergencia médica', icono: 'fa-heart-pulse', unidad: 'ambulance' }
+            accidente: { titulo: 'Accidente / Choque', icono: 'fa-car-burst', svg: SVG_ACCIDENT, unidad: 'patrol'    },
+            medica:    { titulo: 'Emergencia médica',   icono: 'fa-heart-pulse', svg: SVG_MEDICAL, unidad: 'ambulance' }
         };
 
         let emergenciaIdCounter = 0;
 
         function crearEmergencia(tipo, prioridad, direccion = '', posicion = null) {
-            const pos = posicion || randomPointAround(centroSimulacion, 0.4, 1.4);
+            const pos = posicion || randomPointAround(centroSimulacion, 0.8, 3.5);
             const id = 'E-' + String(++emergenciaIdCounter).padStart(3, '0');
             const tipoInfo = TIPOS_EMERGENCIA[tipo];
             
@@ -923,7 +1466,15 @@
             };
 
             emergencia.marker = L.marker(pos, {
-                icon: createCustomIcon('marker-emergency', id, `<i class="fa-solid ${tipoInfo.icono}"></i>`)
+                icon: L.divIcon({
+                    className: 'custom-marker-wrapper',
+                    html: `<div class="km-marker">
+                               <div class="km-emergency">${tipoInfo.svg}</div>
+                               <div class="km-label">${id}</div>
+                           </div>`,
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19]
+                })
             }).addTo(map).bindPopup(`
                 <b>${tipoInfo.titulo}</b><br>
                 ${emergencia.direccion}<br>
@@ -934,15 +1485,15 @@
             toast(`Nueva emergencia: ${tipoInfo.titulo}`, `${emergencia.direccion} · ${id}`, 'error');
             actualizarTodo();
             
-            if (autoAsignar) {
-                setTimeout(() => asignarUnidadAEmergencia(id), 500);
-            }
+            // Asignación automática SIEMPRE
+            setTimeout(() => asignarUnidadAEmergencia(id), 500);
             return emergencia;
         }
 
         function asignarUnidadAEmergencia(emergenciaId) {
             const emerg = emergencias.find(e => e.id === emergenciaId);
             if (!emerg || emerg.unidadAsignada) return;
+            if (emerg.estado === 'resuelta') return;
 
             const tipoRequerido = TIPOS_EMERGENCIA[emerg.tipo].unidad;
             const candidatas = Object.values(estadoUnidades)
@@ -954,7 +1505,9 @@
                 .sort((a, b) => a.dist - b.dist);
 
             if (candidatas.length === 0) {
-                toast('Sin unidades disponibles', `No hay ${tipoRequerido === 'patrol' ? 'patrullas' : 'ambulancias'} libres`, 'warning');
+                toast('Sin unidades disponibles', `Reintentando asignación para ${emerg.id}...`, 'warning');
+                // Reintentar en 3 segundos
+                setTimeout(() => asignarUnidadAEmergencia(emergenciaId), 3000);
                 return;
             }
 
@@ -962,6 +1515,10 @@
             mejor.emergenciaAsignada = emerg.id;
             emerg.unidadAsignada = mejor.info.id;
             emerg.estado = 'en_atencion';
+
+            if (!mejor.velocidadOriginal) mejor.velocidadOriginal = mejor.velocidad;
+            mejor.velocidad = mejor.velocidadOriginal * 5.3;
+            mejor.speedHud = null;
 
             asignarNuevaRuta(mejor.info.id, centroSimulacion, emerg.posicion);
             
@@ -984,12 +1541,25 @@
                 if (est) {
                     est.emergenciaAsignada = null;
                     est.estado = 'llegado';
+                    eliminarSpeedHud(est);
+                    if (est.velocidadOriginal) {
+                        est.velocidad = est.velocidadOriginal;
+                        est.velocidadOriginal = null;
+                    }
                     setTimeout(() => asignarNuevaRuta(est.info.id, centroSimulacion), 2000);
                 }
             }
 
             if (emerg.marker) {
-                emerg.marker.setIcon(createCustomIcon('marker-emergency', emerg.id + ' ✓', '<i class="fa-solid fa-check"></i>'));
+                emerg.marker.setIcon(L.divIcon({
+                    className: 'custom-marker-wrapper',
+                    html: `<div class="km-marker">
+                               <div class="km-emergency" style="animation:none; background:var(--green);">${SVG_CHECK}</div>
+                               <div class="km-label" style="background:rgba(16,185,129,0.92);">${emerg.id} ✓</div>
+                           </div>`,
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19]
+                }));
                 setTimeout(() => {
                     if (emerg.marker) map.removeLayer(emerg.marker);
                 }, 3000);
@@ -1030,26 +1600,24 @@
                 const tiempo = e.resuelta 
                     ? `${e.tiempoRespuesta}s` 
                     : `${Math.round((Date.now() - e.creada) / 1000)}s`;
+                const tipoIcon = e.tipo === 'accidente' ? 'fa-car-burst' : 'fa-heart-pulse';
                 return `
                 <div class="emergency-card ${e.estado}" data-id="${e.id}">
                     <div class="emergency-header">
                         <div class="emergency-title">
-                            <i class="fa-solid ${TIPOS_EMERGENCIA[e.tipo].icono}"></i>
+                            <i class="fa-solid ${tipoIcon}"></i>
                             ${e.titulo} <span style="color: var(--text-muted); font-weight: 500;">${e.id}</span>
                         </div>
                         <span class="emergency-priority priority-${e.prioridad}">${e.prioridad}</span>
                     </div>
                     <div class="emergency-meta">
                         <div><i class="fa-solid fa-location-dot"></i> ${e.direccion}</div>
-                        <div><i class="fa-solid fa-car"></i> ${e.unidadAsignada || 'Sin asignar'}</div>
+                        <div><i class="fa-solid fa-car"></i> ${e.unidadAsignada || 'Buscando unidad...'}</div>
                         <div><i class="fa-solid fa-clock"></i> ${tiempo} · ${e.estado.replace('_', ' ')}</div>
                     </div>
                     <div class="emergency-actions">
-                        ${e.estado !== 'resuelta' && !e.unidadAsignada ? 
-                            `<button class="btn" onclick="asignarUnidadAEmergencia('${e.id}')"><i class="fa-solid fa-bolt"></i> Asignar</button>` : ''}
-                        ${e.estado !== 'resuelta' ? 
-                            `<button class="btn btn-success" onclick="resolverEmergencia('${e.id}')"><i class="fa-solid fa-check"></i> Resolver</button>` : ''}
-                        <button class="btn btn-secondary" onclick="map.flyTo([${e.posicion.lat}, ${e.posicion.lng}], 17)"><i class="fa-solid fa-eye"></i></button>
+                        <button class="btn btn-secondary" onclick="map.flyTo([${e.posicion.lat}, ${e.posicion.lng}], 17)"><i class="fa-solid fa-eye"></i> Ver en mapa</button>
+                        ${e.estado === 'resuelta' ? '<span style="color:var(--green);font-size:11px;font-weight:700;margin-left:auto;"><i class="fa-solid fa-check-circle"></i> Resuelta</span>' : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -1083,6 +1651,8 @@
             if (resueltas.length > 0) {
                 const prom = Math.round(resueltas.reduce((s, e) => s + e.tiempoRespuesta, 0) / resueltas.length);
                 document.getElementById('stat-tiempo').textContent = prom + 's';
+            } else {
+                document.getElementById('stat-tiempo').textContent = '--';
             }
         }
 
@@ -1160,25 +1730,24 @@
         // ==========================================
         // GESTIÓN UNIDADES TEMPORALES
         // ==========================================
-        function agregarUnidadTemporal(tipo, id) {
+        function agregarUnidadTemporal(tipo, id, posicion) {
             if (!id || id.trim() === '') {
                 id = (tipo === 'patrol' ? 'P-T' : 'A-T') + Math.floor(Math.random() * 90 + 10);
             }
             id = id.trim().toUpperCase();
 
-            if (UNIDADES.some(u => u.id === id)) {
+            if (Object.keys(estadoUnidades).some(u => u === id)) {
                 toast('ID duplicado', `Ya existe una unidad con ID "${id}"`, 'error');
                 return false;
             }
 
             const nuevaUnidad = { id, tipo, temporal: true };
             UNIDADES_TEMPORALES.push(nuevaUnidad);
-            UNIDADES.push(nuevaUnidad);
 
-            const inicio = randomPointAround(centroSimulacion, 0.3, 0.9);
-            const iconFA = tipo === 'patrol' ? 'fa-car' : 'fa-truck-medical';
+            const inicio = posicion || centroSimulacion;
+            const iconSVG = tipo === 'patrol' ? SVG_PATROL : SVG_AMBULANCE;
             const marker = L.marker(inicio, {
-                icon: createCustomIcon(tipo === 'patrol' ? 'marker-patrol' : 'marker-ambulance', id, `<i class="fa-solid ${iconFA}" style="font-size:12px;"></i>`)
+                icon: createCustomIcon(tipo === 'patrol' ? 'km-patrol' : 'km-ambulance', id, iconSVG, true)
             }).addTo(map);
             marker.on('click', () => mostrarDetalleUnidad(id));
 
@@ -1187,7 +1756,8 @@
                 estado: 'buscando',
                 velocidad: tipo === 'patrol' ? 1 : 1.2,
                 temporal: true, destino: null, distancia: 0, duracion: 0,
-                emergenciaAsignada: null, tiempoLlegada: null
+                emergenciaAsignada: null, tiempoLlegada: null,
+                velocidadOriginal: null, speedHud: null
             };
 
             asignarNuevaRuta(id, centroSimulacion);
@@ -1205,7 +1775,6 @@
                 delete estadoUnidades[id];
             }
             UNIDADES_TEMPORALES = UNIDADES_TEMPORALES.filter(u => u.id !== id);
-            UNIDADES = UNIDADES.filter(u => u.id !== id);
             actualizarPanelUnidades();
             actualizarGridUnidades();
             toast('Unidad eliminada', id, 'info');
@@ -1232,7 +1801,9 @@
             document.getElementById('detailTitle').innerHTML = `<i class="fa-solid fa-${est.info.tipo === 'patrol' ? 'car' : 'truck-medical'}"></i> ${est.info.id}`;
             
             const estadoTxt = { en_camino: 'En camino', llegado: 'En el lugar', buscando: 'Asignando', error: 'Sin ruta', asignado: 'Atendiendo emergencia' }[est.estado] || est.estado;
-            const velocidadKmh = est.estado === 'en_camino' || est.estado === 'asignado' ? Math.round((est.info.tipo === 'patrol' ? 60 : 72) * velocidadSim) : 0;
+            const velocidadKmh = (est.estado === 'en_camino' || est.estado === 'asignado')
+                ? Math.round((est.info.tipo === 'patrol' ? 45 : 52) * velocidadSim * (est.velocidad / (est.info.tipo === 'patrol' ? 1 : 1.2)))
+                : 0;
             const eta = est.tiempoLlegada ? Math.max(0, Math.round((est.tiempoLlegada - Date.now()) / 1000)) : '--';
 
             document.getElementById('detailBody').innerHTML = `
@@ -1313,13 +1884,26 @@
         });
 
         // ==========================================
-        // EVENT LISTENERS
+        // EVENT LISTENERS (UNIDADES)
         // ==========================================
+        document.getElementById('btnSeleccionarPunto').addEventListener('click', () => {
+            seleccionandoPuntoPartida = true;
+            document.body.classList.add('modo-seleccion');
+            toast('Haz clic en el mapa', 'Selecciona el punto de partida de la unidad', 'info');
+        });
+
         document.getElementById('btnAgregarUnidad').addEventListener('click', () => {
+            if (!puntoPartidaSeleccionado) {
+                toast('Falta punto de partida', 'Primero selecciona un punto en el mapa', 'warning');
+                return;
+            }
             const tipo = document.getElementById('tipoUnidadTemporal').value;
             const inputId = document.getElementById('idUnidadTemporal');
-            if (agregarUnidadTemporal(tipo, inputId.value)) {
+            if (agregarUnidadTemporal(tipo, inputId.value, puntoPartidaSeleccionado)) {
                 inputId.value = '';
+                puntoPartidaSeleccionado = null;
+                document.getElementById('btnAgregarUnidad').disabled = true;
+                document.getElementById('puntoSeleccionadoInfo').style.display = 'none';
                 inputId.focus();
             }
         });
@@ -1330,20 +1914,71 @@
 
         document.getElementById('btnLimpiarTemporales').addEventListener('click', limpiarUnidadesTemporales);
 
-        document.getElementById('btnCrearEmergencia').addEventListener('click', () => {
+        // ==========================================
+        // EVENT LISTENERS (EMERGENCIAS)
+        // ==========================================
+        document.getElementById('btnCrearEmergencia').addEventListener('click', async () => {
             const tipo = document.getElementById('tipoEmergencia').value;
             const prioridad = document.getElementById('prioridadEmergencia').value;
-            const direccion = document.getElementById('direccionEmergencia').value;
-            crearEmergencia(tipo, prioridad, direccion);
+            const direccion = document.getElementById('direccionEmergencia').value.trim();
+
+            let pos = null, dirFinal = direccion;
+
+            const latSel = parseFloat(inputDireccion.dataset.lat);
+            const lngSel = parseFloat(inputDireccion.dataset.lng);
+            if (!isNaN(latSel) && !isNaN(lngSel)) {
+                pos = L.latLng(latSel, lngSel);
+                map.flyTo(pos, 16);
+            } else if (direccion) {
+                toast('Buscando dirección...', direccion, 'info');
+                const geo = await geocodificar(direccion);
+                if (geo) {
+                    pos = geo;
+                    map.flyTo(pos, 16);
+                } else {
+                    toast('Dirección no encontrada', 'Se usará zona aleatoria', 'warning');
+                }
+            }
+
+            crearEmergencia(tipo, prioridad, dirFinal, pos);
             document.getElementById('direccionEmergencia').value = '';
+            delete inputDireccion.dataset.lat;
+            delete inputDireccion.dataset.lng;
         });
 
         document.getElementById('btnNuevaEmergencia').addEventListener('click', () => {
-            const tipos = Object.keys(TIPOS_EMERGENCIA);
-            const tipo = tipos[Math.floor(Math.random() * tipos.length)];
-            const prioridades = ['alta', 'media', 'baja'];
-            const prioridad = prioridades[Math.floor(Math.random() * 3)];
-            crearEmergencia(tipo, prioridad);
+            modoSeleccion = true;
+            document.body.classList.add('modo-seleccion');
+            toast('Haz clic en el mapa', 'Selecciona el punto exacto de la emergencia', 'info');
+        });
+
+        // ==========================================
+        // CLICK EN MAPA
+        // ==========================================
+        let modoSeleccion = false;
+        let seleccionandoPuntoPartida = false;
+
+        map.on('click', async (e) => {
+            if (seleccionandoPuntoPartida) {
+                seleccionandoPuntoPartida = false;
+                document.body.classList.remove('modo-seleccion');
+                puntoPartidaSeleccionado = e.latlng;
+                document.getElementById('btnAgregarUnidad').disabled = false;
+                document.getElementById('puntoSeleccionadoInfo').style.display = 'block';
+                toast('Punto seleccionado', `Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`, 'success');
+                return;
+            }
+
+            if (!modoSeleccion) return;
+            modoSeleccion = false;
+            document.body.classList.remove('modo-seleccion');
+
+            const tipo = document.getElementById('tipoEmergencia').value;
+            const prioridad = document.getElementById('prioridadEmergencia').value;
+
+            toast('Obteniendo dirección...', '', 'info');
+            const dir = await reverseGeocodificar(e.latlng);
+            crearEmergencia(tipo, prioridad, dir, e.latlng);
         });
 
         document.getElementById('btnNotifications').addEventListener('click', () => {
@@ -1354,9 +1989,13 @@
         document.getElementById('velocidadSim').addEventListener('input', (e) => {
             velocidadSim = parseInt(e.target.value);
         });
-        document.getElementById('autoAsignar').addEventListener('change', (e) => {
-            autoAsignar = e.target.checked;
-        });
+
+        // Auto-asignación siempre activa (no configurable)
+        const autoAsignarCheckbox = document.getElementById('autoAsignar');
+        if (autoAsignarCheckbox) {
+            autoAsignarCheckbox.checked = true;
+            autoAsignarCheckbox.disabled = true;
+        }
 
         // ==========================================
         // CHARTS
@@ -1394,7 +2033,7 @@
                     labels: Object.keys(tiposCount).map(k => TIPOS_EMERGENCIA[k].titulo),
                     datasets: [{
                         data: Object.values(tiposCount),
-                        backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#8B5CF6', '#3B82F6'],
+                        backgroundColor: ['#EF4444', '#F97316'],
                         borderWidth: 2,
                         borderColor: document.body.classList.contains('dark') ? '#1E293B' : '#FFF'
                     }]
@@ -1472,12 +2111,6 @@
         window.addEventListener('load', () => {
             setTimeout(() => activarGeolocalizacion(true), 600);
             setTimeout(() => map.invalidateSize(), 1200);
-
-            setTimeout(() => {
-                crearEmergencia('robo', 'alta', 'Av. Reforma 234');
-                setTimeout(() => crearEmergencia('accidente', 'media', 'Calle 60 #45'), 3000);
-                setTimeout(() => crearEmergencia('medica', 'alta', 'Col. Centro'), 7000);
-            }, 3000);
 
             setInterval(() => {
                 actualizarGridEmergencias();
