@@ -5,7 +5,7 @@
    CONFIGURACIÓN
 ========================================================== */
 
-const NUMERO_EMERGENCIAS = "99971557245";
+const NUMERO_EMERGENCIAS = "9971557245";
 
 const API_CREAR_EMERGENCIA =
     "../api/emergencias/crear.php";
