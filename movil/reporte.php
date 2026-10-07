@@ -600,59 +600,57 @@
         <form id="reportForm">
 
             <!-- CATEGORÍAS -->
-            <section class="report-card">
-                <div class="section-title">
-                    <span class="step">1</span>
-                    <h2>¿Qué deseas reportar?</h2>
-                </div>
+           <!-- CATEGORÍAS -->
+<section class="report-card">
+    <div class="section-title">
+        <span class="step">1</span>
+        <h2>¿Qué deseas reportar?</h2>
+    </div>
 
-                <div class="categories">
-                    <?php
-                    $iconos = [
-                        'fa-user',
-                        'fa-truck',
-                        'fa-motorcycle',
-                        'fa-car',
-                        'fa-volume-high',
-                        'fa-hammer',
-                        'fa-circle-exclamation'
-                    ];
+    <div class="categories">
+        <?php
+        $opcionesReporte = [
+            'Personas sospechosas' => 'fa-user',
+            'Vehículos sospechosos' => 'fa-truck',
+            'Carreras clandestinas de motos' => 'fa-motorcycle',
+            'Carreras clandestinas de autos' => 'fa-car',
+            'Alteración del orden público' => 'fa-volume-high',
+            'Vandalismo' => 'fa-hammer',
+            'Otro incidente' => 'fa-circle-exclamation'
+        ];
 
-                    foreach ($categorias as $indice => $categoria):
-                    ?>
+        foreach ($opcionesReporte as $nombre => $icono):
+        ?>
+            <label class="category">
+                <input
+                    type="radio"
+                    name="categoria"
+                    value="<?= htmlspecialchars(
+                        $nombre,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>"
+                    required
+                >
 
-                        <label class="category">
-                            <input
-                                type="radio"
-                                name="categoria"
-                                value="<?= htmlspecialchars(
-                                    $categoria,
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>"
-                                required
-                            >
+                <span class="category-box">
+                    <i
+                        class="fa-solid <?= $icono ?>"
+                        aria-hidden="true"
+                    ></i>
 
-                            <span class="category-box">
-                                <i
-                                    class="fa-solid <?= $iconos[$indice]
-                                        ?? 'fa-circle-exclamation' ?>"
-                                    aria-hidden="true"
-                                ></i>
-
-                                <span>
-                                    <?= htmlspecialchars(
-                                        $categoria,
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
-                                </span>
-                            </span>
-                        </label>
-
-                    <?php endforeach; ?>
-                </div>
-            </section>
+                    <span>
+                        <?= htmlspecialchars(
+                            $nombre,
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </span>
+                </span>
+            </label>
+        <?php endforeach; ?>
+    </div>
+</section>
 
             <!-- DESCRIPCIÓN -->
             <section class="report-card">

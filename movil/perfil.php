@@ -477,28 +477,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <header class="login-header">
 
-        <button
-            type="button"
-            class="login-header-button"
-            id="menuButton"
-            aria-label="Abrir menú"
-        >
-            <i class="fa-solid fa-bars" aria-hidden="true"></i>
-        </button>
 
         <div class="login-brand">
             <img src="logo.jpeg" alt="Logo KANAN">
             <strong>KANAN</strong>
         </div>
-
-        <button
-            type="button"
-            class="login-header-button"
-            id="notificationButton"
-            aria-label="Notificaciones"
-        >
-            <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
 
     </header>
 
