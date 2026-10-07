@@ -519,6 +519,23 @@
         .autocomplete-item.empty i {
             color: var(--text-muted);
         }
+
+        /* ============================================
+           IFRAME CENTRO DE MONITOREO
+           ============================================ */
+        #view-perfil {
+            padding: 0;
+            height: 100%;
+        }
+        #iframeMonitoreo {
+            flex: 1;
+            width: 100%;
+            min-height: calc(100vh - 130px);
+            border: 0;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: var(--shadow);
+        }
     </style>
 </head>
 <body>
@@ -766,6 +783,16 @@
                     <input type="checkbox" id="darkToggle" style="width: 20px; height: 20px;">
                 </div>
             </div>
+        </div>
+
+        <!-- ============ VISTA CENTRO DE MONITOREO (iframe PHP) ============ -->
+        <div class="view" id="view-perfil">
+            <iframe 
+                id="iframeMonitoreo"
+                src="about:blank"
+                loading="lazy"
+                referrerpolicy="no-referrer">
+            </iframe>
         </div>
 
     </main>
@@ -1277,7 +1304,7 @@
         let filtroUnidades = 'todas';
         let filtroEmergencias = 'todas';
         let velocidadSim = 1;
-        const autoAsignar = true; // SIEMPRE ACTIVO
+        const autoAsignar = true;
 
         let puntoPartidaSeleccionado = null;
 
@@ -1289,24 +1316,35 @@
             if (!window._reasignInterval) {
                 window._reasignInterval = setInterval(() => {
                     Object.values(estadoUnidades).forEach(est => {
-                        if (est.estado === 'llegado' && !est.emergenciaAsignada) {
+                        if (!est.emergenciaAsignada &&
+                            (est.estado === 'llegado' || est.estado === 'error' || !est.ruta)) {
                             asignarNuevaRuta(est.info.id, centroSimulacion);
                         }
                     });
-                }, 15000);
+                }, 3000);
             }
             actualizarPanelUnidades();
             actualizarGridUnidades();
+            
+            setTimeout(() => {
+                Object.values(estadoUnidades).forEach(est => {
+                    if (!est.emergenciaAsignada && (est.estado === 'llegado' || !est.ruta)) {
+                        asignarNuevaRuta(est.info.id, centroSimulacion);
+                    }
+                });
+            }, 500);
         }
 
         async function asignarNuevaRuta(id, centro, destinoFijo = null) {
             const est = estadoUnidades[id];
             if (!est) return;
+            if (est.estado === 'en_camino' || est.estado === 'asignado') return;
+            
             est.estado = 'buscando';
             actualizarGridUnidades();
 
             const origen = est.marker.getLatLng();
-            const destino = destinoFijo || randomPointAround(centro, 2.0, 4.5);
+            const destino = destinoFijo || randomPointAround(centro, 0.5, 2.5);
 
             const ruta = await obtenerRuta(origen, destino);
             if (!ruta) {
@@ -1402,6 +1440,18 @@
                             setTimeout(() => resolverEmergencia(emerg.id), tiempoAtencion);
                         }
                         est.emergenciaAsignada = null;
+                        
+                        setTimeout(() => {
+                            if (!est.emergenciaAsignada && (est.estado === 'llegado' || est.estado === 'error')) {
+                                asignarNuevaRuta(est.info.id, centroSimulacion);
+                            }
+                        }, 500);
+                    } else {
+                        setTimeout(() => {
+                            if (!est.emergenciaAsignada && est.estado === 'llegado') {
+                                asignarNuevaRuta(est.info.id, centroSimulacion);
+                            }
+                        }, 300);
                     }
 
                     actualizarPanelUnidades();
@@ -1486,7 +1536,6 @@
             toast(`Nueva emergencia: ${tipoInfo.titulo}`, `${emergencia.direccion} · ${id}`, 'error');
             actualizarTodo();
             
-            // Asignación automática SIEMPRE
             setTimeout(() => asignarUnidadAEmergencia(id), 500);
             return emergencia;
         }
@@ -1507,7 +1556,6 @@
 
             if (candidatas.length === 0) {
                 toast('Sin unidades disponibles', `Reintentando asignación para ${emerg.id}...`, 'warning');
-                // Reintentar en 3 segundos
                 setTimeout(() => asignarUnidadAEmergencia(emergenciaId), 3000);
                 return;
             }
@@ -1521,6 +1569,8 @@
             mejor.velocidad = mejor.velocidadOriginal * 5.3;
             mejor.speedHud = null;
 
+            if (mejor.polyline) { map.removeLayer(mejor.polyline); mejor.polyline = null; }
+            mejor.estado = 'buscando';
             asignarNuevaRuta(mejor.info.id, centroSimulacion, emerg.posicion);
             
             toast('Unidad asignada', `${mejor.info.id} → ${emerg.titulo} (${emerg.id})`, 'success');
@@ -1547,7 +1597,7 @@
                         est.velocidad = est.velocidadOriginal;
                         est.velocidadOriginal = null;
                     }
-                    setTimeout(() => asignarNuevaRuta(est.info.id, centroSimulacion), 2000);
+                    setTimeout(() => asignarNuevaRuta(est.info.id, centroSimulacion), 300);
                 }
             }
 
@@ -1847,7 +1897,8 @@
             emergencias: 'Gestión de Emergencias',
             unidades: 'Gestión de Unidades',
             reportes: 'Estadísticas y Reportes',
-            configuracion: 'Configuración'
+            configuracion: 'Configuración',
+            perfil: 'Centro de Monitoreo'
         };
 
         document.querySelectorAll('.nav-menu li').forEach(li => {
@@ -1860,6 +1911,13 @@
                 document.getElementById('view-title').textContent = viewTitles[view] || 'KANAN EMERGENCIAS';
                 if (view === 'inicio' && map) setTimeout(() => map.invalidateSize(), 100);
                 if (view === 'reportes') setTimeout(() => { actualizarStatsReportes(); actualizarCharts(); }, 100);
+                // 👇 Cargar Centro de Monitoreo (iframe PHP) bajo demanda
+                if (view === 'perfil') {
+                    const iframe = document.getElementById('iframeMonitoreo');
+                    if (iframe && (iframe.src === 'about:blank' || iframe.src === '')) {
+                        iframe.src = 'central_monitoreo.php';
+                    }
+                }
             });
         });
 
@@ -1991,7 +2049,6 @@
             velocidadSim = parseInt(e.target.value);
         });
 
-        // Auto-asignación siempre activa (no configurable)
         const autoAsignarCheckbox = document.getElementById('autoAsignar');
         if (autoAsignarCheckbox) {
             autoAsignarCheckbox.checked = true;
