@@ -1076,7 +1076,7 @@ function configurarLlamada() {
 
                 window.location.href =
                     "tel:" +
-                    NUMERO_EMERGENCIAS;
+                    "";
 
             }
 
